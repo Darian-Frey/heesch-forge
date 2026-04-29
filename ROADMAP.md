@@ -10,12 +10,12 @@ This document tracks phases, gates, and current status. The proposal in `PROPOSA
 
 ## Phase status overview
 
-*Updated 2026-04-29: M0.1–M0.6 complete; Phase 0 closed pending PR merges.*
+*Updated 2026-04-30: Phase 0 closed; Phase 1 active (M1.1 done, 1/7).*
 
 | Phase | Layers | Status | Target completion |
 |-------|--------|--------|-------------------|
 | 0 — Setup | — | ✅ done (6/6) | met |
-| 1 — Engineering | L1 | ⚪ not started | +8 weeks |
+| 1 — Engineering | L1 | 🟢 active (1/7) | +8 weeks |
 | 2 — Hybrid solver | L2 | ⚪ not started | +16 weeks |
 | 3 — Lateral grids | L4 | ⚪ not started | parallel from Phase 2 |
 | 4 — RL pilot | L3 | ⚪ not started | +28 weeks |
@@ -51,7 +51,7 @@ Legend: ✅ done · 🟢 active · 🟡 in progress · ⚪ not started · 🔴 b
 
 ### Milestones
 
-- [ ] M1.1 — Swap upstream's CryptoMiniSat backend for CaDiCaL as a single-solver baseline; verify no regression against M0.4 reference values.
+- [x] M1.1 — CaDiCaL backend lives alongside CryptoMiniSat behind a single `SATSolverImpl` typedef in `src/sat/src/heesch.h`, selected at compile time by `-DHEESCH_BACKEND_CADICAL`; the Makefile builds both `sat` (CMSat) and `sat-cadical` (CaDiCaL). M0.4 regression: 174/174 shapes match for both backends. Performance against the M0.5 baseline (n ∈ {7, 8, 11, 12}, 174 shapes): CaDiCaL 569.2 s vs CMSat 256.2 s — **2.22× slower at total wall, 3.0× at p95, 3.3× at max**, with `sat_calls` count preserved (1046 vs 1047). Side-by-side at `benchmarks/baseline/results/m1.1-comparison.md`. Single-solver swap is not the Phase-1 win; M1.2 (portfolio first-to-finish + clause sharing) and M1.3 (BreakID symmetry breaking) need to deliver the headline speedup.
 - [ ] M1.2 — Portfolio harness (CaDiCaL + Kissat + Glucose) with first-to-finish termination.
 - [ ] M1.3 — BreakID integration; per-shape comparison with/without symmetry breaking.
 - [ ] M1.4 — PBLib AMO encoding sweep; record per-corona-depth optimum.
@@ -199,6 +199,15 @@ When a planned file is created, move its row from this table into the "Live now"
 ---
 
 ## Status notes (latest first)
+
+**30 April 2026.** M1.1 closed; Phase 1 opened.
+
+- M1.1: introduced an `#ifdef HEESCH_BACKEND_CADICAL`-driven `SATSolverImpl` typedef in `src/sat/src/heesch.h`, written a CaDiCaL adapter at `src/sat/src/cadical_backend.h` mimicking the CMSat::SATSolver subset that HeeschSolver actually uses (`new_vars`, `add_clause(vector<Lit>)`, `solve()->lbool`, `get_model()`, plus the three `get_last_*` counter accessors), and updated the Makefile to build both `sat` (CMSat) and `sat-cadical` (CaDiCaL) from the same sources. CMSat::Lit/lbool remain the project-wide literal types in both builds, so the rest of `heesch.h` is backend-agnostic.
+- Correctness: M0.4 regression returns 174/174 match for both backends.
+- Performance (n ∈ {7, 8, 11, 12}, 174 shapes): CaDiCaL 569.2 s vs CMSat 256.2 s — **2.22× slower at total wall, 3.0× at p95, 3.3× at max**. SAT solve-call counts are identical to within one (1046 vs 1047), confirming the heesch-sat algorithm is unchanged. Side-by-side at `benchmarks/baseline/results/m1.1-comparison.md`.
+- Caveat: CaDiCaL 1.7's public API does not expose conflicts/decisions/propagations counters, so `sat-cadical` writes zeros in those JSONL fields; recorded in `src/sat/UPSTREAM.md` and `benchmarks/baseline/README.md`. If a future CaDiCaL release adds the accessors, only `cadical_backend.h` changes.
+
+Single-solver swap is **not** the Phase-1 win. M1.2 (portfolio with clause sharing) and M1.3 (BreakID) need to do most of the heavy lifting toward the ≥5× target.
 
 **29 April 2026 (night).** M0.6 closed; **Phase 0 done**.
 

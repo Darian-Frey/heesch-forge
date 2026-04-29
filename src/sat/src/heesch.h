@@ -14,6 +14,18 @@
 #include "boundary.h"
 #include "isohedral.h"
 
+// M1.1: pluggable SAT backend selected at compile time. The default (no
+// macro) keeps upstream's CryptoMiniSat backend; -DHEESCH_BACKEND_CADICAL
+// in the build switches to CaDiCaL via the adapter in cadical_backend.h.
+// CMSat::Lit / CMSat::lbool remain the project-wide literal and truth-value
+// types regardless of backend, so the rest of this file is backend-agnostic.
+#ifdef HEESCH_BACKEND_CADICAL
+#include "cadical_backend.h"
+using SATSolverImpl = cadical_backend::CadicalSolver;
+#else
+using SATSolverImpl = CMSat::SATSolver;
+#endif
+
 // The core of the whole system: a class that understands how to compute
 // Heesch numbers of polyforms.  As of 2023, also includes the ability
 // to check whether a polyform tiles isohedrally.
@@ -211,7 +223,7 @@ public:
 	void debugCurrentPatch( patch_t& soln ) const;
 
 	// M0.5 instrumentation: aggregate SAT-solver stats accumulated across
-	// every CMSat::SATSolver::solve() call made during the most recent
+	// every SATSolverImpl::solve() call made during the most recent
 	// solve(). Counters are zeroed at construction and never reset, so
 	// repeated calls accumulate; a HeeschSolver is constructed fresh per
 	// shape (sat.cpp:computeHeesch) so per-shape readout is clean.
@@ -232,15 +244,15 @@ private:
 	var_id getCellVariable( const point_t& p );
 	var_id getCellVariable( const point_t& p ) const;
 
-	void getClauses( CMSat::SATSolver& solv, bool allow_holes ) const;
-	void getSolution( const CMSat::SATSolver& solv,
+	void getClauses( SATSolverImpl& solv, bool allow_holes ) const;
+	void getSolution( const SATSolverImpl& solv,
 		patch_t& ret, size_t lev = 0xDEADBEEF ) const;
 	void extendLevelWithTransforms( size_t lev, const xform_set<coord_t>& Ts );
-	size_t allCoronas( CMSat::SATSolver& solv, solution_cb<coord_t> cb ) const;
-	bool checkIsohedralTiling( CMSat::SATSolver& solv );
-	bool iterateUntilSimplyConnected(size_t lev, CMSat::SATSolver& solver);
+	size_t allCoronas( SATSolverImpl& solv, solution_cb<coord_t> cb ) const;
+	bool checkIsohedralTiling( SATSolverImpl& solv );
+	bool iterateUntilSimplyConnected(size_t lev, SATSolverImpl& solver);
 
-	// bool checkForCentralPeriod(CMSat::SATSolver& solver) const;
+	// bool checkForCentralPeriod(SATSolverImpl& solver) const;
 
 	Shape<grid> shape_;
 	Cloud<grid> cloud_;
@@ -267,7 +279,7 @@ private:
 	// Run a SAT solve and accumulate its per-call counter deltas into
 	// the cum_* members. Use this in place of bare s.solve() at every
 	// site reachable from HeeschSolver::solve().
-	CMSat::lbool runAndAccount( CMSat::SATSolver& s )
+	CMSat::lbool runAndAccount( SATSolverImpl& s )
 	{
 		auto r = s.solve();
 		cum_conflicts_    += s.get_last_conflicts();
@@ -543,7 +555,7 @@ void HeeschSolver<grid>::increaseLevel()
 
 template<typename grid>
 void HeeschSolver<grid>::getClauses(
-	CMSat::SATSolver& solv, bool allow_holes ) const
+	SATSolverImpl& solv, bool allow_holes ) const
 {
 	std::vector<CMSat::Lit> cl;
 
@@ -692,7 +704,7 @@ void HeeschSolver<grid>::getClauses(
 
 template<typename grid>
 void HeeschSolver<grid>::getSolution( 
-	const CMSat::SATSolver& solv, patch_t& ret, size_t lev ) const
+	const SATSolverImpl& solv, patch_t& ret, size_t lev ) const
 {
 	if (lev == 0xDEADBEEF ) {
 		lev = level_;
@@ -730,7 +742,7 @@ bool HeeschSolver<grid>::hasCorona(
 		return false;
 	}
 
-	CMSat::SATSolver solver;
+	SATSolverImpl solver;
 	solver.new_vars(next_var_);
 
 	getClauses(solver, false);
@@ -809,7 +821,7 @@ bool HeeschSolver<grid>::hasCorona(
 		// The offending method has already been removed.
 		// addHolesToLevel();
 
-		CMSat::SATSolver solver;
+		SATSolverImpl solver;
 		solver.new_vars( next_var_ );
 		getClauses( solver, true );
 		if( solver.solve() == CMSat::l_True ) {
@@ -830,7 +842,7 @@ bool HeeschSolver<grid>::hasCorona(
 
 template<typename grid>
 bool HeeschSolver<grid>::iterateUntilSimplyConnected( 
-	size_t lev, CMSat::SATSolver& solver)
+	size_t lev, SATSolverImpl& solver)
 {
 	// To begin, ban all pairwise holes in the outermost corona,
 	// using information from the cloud.  These are cheap to forbid
@@ -943,7 +955,7 @@ void HeeschSolver<grid>::solve(
 		if (check_hh_) {
 			increaseLevel();
 			extendLevelWithTransforms(0, cloud_.adjacent_culled_);
-			CMSat::SATSolver final_solver;
+			SATSolverImpl final_solver;
 			final_solver.new_vars(next_var_);
 			getClauses(final_solver, true);
 			if (runAndAccount(final_solver) == CMSat::l_True) {
@@ -960,7 +972,7 @@ void HeeschSolver<grid>::solve(
 	}
 
 	// Keep around all past solvers for resolving holes later.
-	std::vector<std::unique_ptr<CMSat::SATSolver>> past_solvers;
+	std::vector<std::unique_ptr<SATSolverImpl>> past_solvers;
 	// Avoid too much allocation
 	past_solvers.reserve(MAX_CORONA);
 
@@ -974,7 +986,7 @@ void HeeschSolver<grid>::solve(
 		increaseLevel();
 		// std::cerr << "Now checking level " << level_ << std::endl;
 
-		std::unique_ptr<CMSat::SATSolver> cur_solver {new CMSat::SATSolver};
+		std::unique_ptr<SATSolverImpl> cur_solver {new SATSolverImpl};
 		cur_solver->new_vars(next_var_);
 		getClauses(*cur_solver, true);
 
@@ -987,7 +999,7 @@ void HeeschSolver<grid>::solve(
 				// you should try adding in the culled adjacencies and
 				// testing for a holey patch.  One might exist.
 				extendLevelWithTransforms(level_ - 1, cloud_.adjacent_culled_);
-				CMSat::SATSolver final_solver;
+				SATSolverImpl final_solver;
 				final_solver.new_vars(next_var_);
 				getClauses(final_solver, true);
 				if (runAndAccount(final_solver) == CMSat::l_True) {
@@ -1016,7 +1028,7 @@ void HeeschSolver<grid>::solve(
 			// solver, which we need to save.  Find a way to avoid this
 			// duplication.
 
-			CMSat::SATSolver iso_solver;
+			SATSolverImpl iso_solver;
 			iso_solver.new_vars(next_var_);
 			getClauses(iso_solver, true);
 
@@ -1139,7 +1151,7 @@ void HeeschSolver<grid>::solve(
 }
 
 template<typename grid>
-bool HeeschSolver<grid>::checkIsohedralTiling( CMSat::SATSolver& solv ) 
+bool HeeschSolver<grid>::checkIsohedralTiling( SATSolverImpl& solv ) 
 {
 	// The solver is assumed to contain the clauses for a 1-corona. 
 	// Augment it with new clauses that restrict solutions to
@@ -1273,7 +1285,7 @@ bool HeeschSolver<grid>::checkIsohedralTiling( CMSat::SATSolver& solv )
 // do it.
 template<typename grid>
 size_t HeeschSolver<grid>::allCoronas( 
-	CMSat::SATSolver& solv, solution_cb<coord_t> cb ) const
+	SATSolverImpl& solv, solution_cb<coord_t> cb ) const
 {
 	std::cerr << "HeeschSolver::allCoronas() is deprecated" << std::endl;
 
@@ -1327,7 +1339,7 @@ void HeeschSolver<grid>::allCoronas( solution_cb<coord_t> cb ) const
 		return;
 	}
 
-	CMSat::SATSolver solver;
+	SATSolverImpl solver;
 	solver.new_vars( next_var_ );
 	getClauses( solver, false );
 

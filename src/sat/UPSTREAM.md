@@ -83,6 +83,32 @@ upstream adds its own stats hooks).
   Without the flag, sat behaviour is byte-identical to the M0.3 build —
   the M0.4 regression confirms this on every commit that touches `src/sat/`.
 
+### heesch-forge additions (M1.1 SAT-backend abstraction)
+
+- **`SATSolverImpl` typedef + `cadical_backend.h` adapter.**
+  `src/sat/src/heesch.h` introduces a single project-wide alias
+  `using SATSolverImpl = ...;` chosen by an `#ifdef HEESCH_BACKEND_CADICAL`
+  switch: the default keeps `CMSat::SATSolver`, the macro switches to
+  `cadical_backend::CadicalSolver`. The adapter mimics the subset of
+  CryptoMiniSat's API that `HeeschSolver` actually calls (`new_vars`,
+  `add_clause(vector<CMSat::Lit>)`, `solve()` returning `CMSat::lbool`,
+  `get_model()` returning `const vector<CMSat::lbool>&`, plus the three
+  `get_last_*` counter accessors). `CMSat::Lit` and `CMSat::lbool` remain
+  the project-wide literal and truth-value types in both builds, so the
+  rest of `heesch.h` is backend-agnostic.
+- **Two binaries, not a runtime flag.** `src/sat/src/Makefile` builds
+  both `sat` (CryptoMiniSat) and `sat-cadical` (CaDiCaL) from the same
+  sources. Compile-time selection avoids virtual dispatch in the SAT
+  hot path and keeps each binary single-backend; M1.2 (portfolio with
+  clause sharing) is the proper home for runtime multiplexing.
+- **CaDiCaL stats gap.** CaDiCaL 1.7's public C++ API does not expose
+  programmatic per-solve counters for conflicts / decisions /
+  propagations (only a `statistics()` call that prints to stdout). The
+  adapter therefore returns 0 from those getters, and the JSONL records
+  written by `sat-cadical` carry zeros in those fields. M0.5's wall-time
+  and `sat_calls` counters still work. If a future CaDiCaL release adds
+  the accessors, only `cadical_backend.h` changes.
+
 ## Build dependencies (upstream targets `gen sat viz surrounds report`)
 
 - C++20 compiler (g++ ≥ 10 or clang++ ≥ 13). Upstream Makefile says C++17

@@ -1,0 +1,22 @@
+# heesch-forge M0.5 baseline (Kaplan-2022 polyominoes)
+# sat:   src/sat/src/sat-cadical
+# data:  /home/azathoth/heesch-forge/data/kaplan-2022/omino
+# sizes: [7, 8, 11, 12]
+# out:   benchmarks/baseline/results/m1.1-cadical-baseline.jsonl
+
+-- 07omino_0up.txt --
+  07omino_0up.txt           shapes=    3  ok=    3  err=  0  wall_total=   0.53s  p50= 170.93 ms  p95=   0.00 us  pmax= 353.35 ms  conflicts=         0  decisions=         0
+-- 08omino_0up.txt --
+  08omino_0up.txt           shapes=   20  ok=   20  err=  0  wall_total=   3.86s  p50=  70.79 ms  p95=   1.69 s  pmax=   1.75 s  conflicts=         0  decisions=         0
+-- 11omino_2up.txt --
+  11omino_2up.txt           shapes=  110  ok=  110  err=  0  wall_total= 449.56s  p50=   3.23 s  p95=  11.04 s  pmax=  15.05 s  conflicts=         0  decisions=         0
+-- 12omino_2up.txt --
+  12omino_2up.txt           shapes=   41  ok=   41  err=  0  wall_total= 115.20s  p50=   2.26 s  p95=  10.65 s  pmax=  11.79 s  conflicts=         0  decisions=         0
+
+# overall: shapes=174 ok=174 err=0
+# wall_total = 569.15 s (across 174 shapes)
+# per-shape wall: p50=   2.59 s  p95=  10.59 s  pmax=  15.05 s
+# total SAT conflicts:                 0
+# total SAT decisions:                 0
+# total SAT propagations:              0
+# total SAT solve calls:           1,046

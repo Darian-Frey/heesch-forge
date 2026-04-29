@@ -24,13 +24,14 @@ CMakeCache.txt
 cmake_install.cmake
 Makefile.local
 
-# heesch-sat upstream produces these in src/sat/ when `make` runs.
+# heesch-sat upstream produces these in src/sat/src/ when `make` runs.
 # Keep the sources, ignore the binaries.
-src/sat/gen
-src/sat/sat
-src/sat/viz
-src/sat/surrounds
-src/sat/report
+src/sat/src/gen
+src/sat/src/sat
+src/sat/src/sat-cadical
+src/sat/src/viz
+src/sat/src/surrounds
+src/sat/src/report
 
 # ---- Python (Layer 3 RL stack, uv-managed) ----
 __pycache__/
