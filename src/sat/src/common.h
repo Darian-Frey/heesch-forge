@@ -1,0 +1,77 @@
+#pragma once
+
+// A few global types and compile-time limits
+
+// The largest number of coronas we can calculate.  Some data structures
+// use fixed-sized arrays of this length.
+const size_t MAX_CORONA = 10;
+
+// The most vertices in any cell in any grid.
+const size_t MAX_CELL_SIZE = 12;
+
+using tile_index = int32_t;
+using cell_index = int32_t;
+
+template<typename T>
+struct method_hash
+{
+public:
+	size_t operator()( const T& obj ) const
+	{ 
+		return obj.hash();
+	}
+};
+
+
+// Define grid types here so that individual grids can report their types
+// cleanly
+enum GridType {
+	NOGRID = -1,
+
+	OMINO = 0,
+	HEX = 1,
+	IAMOND = 2,
+	OCTASQUARE = 3,
+	TRIHEX = 4,
+	ABOLO = 5,
+	DRAFTER = 6, 
+	KITE = 7, 
+	HALFCAIRO = 8,
+	BEVELHEX = 9
+};
+
+// Get a grid type from a single-character abbreviation.  Don't use 
+// digits or - as grid abbreviations.
+inline GridType getGridType( int ch )
+{
+	switch( ch ) {
+		case 'O': return OMINO;
+		case 'H': return HEX;
+		case 'I': return IAMOND;
+		case 'o': return OCTASQUARE;
+		case 'T': return TRIHEX;
+		case 'A': return ABOLO;
+		case 'D': return DRAFTER;
+		case 'K': return KITE;
+		case 'h': return HALFCAIRO;
+		case 'B': return BEVELHEX;
+		default: return NOGRID;
+	};
+}
+
+inline char gridTypeAbbreviation( GridType gt )
+{
+	switch( gt ) {
+		case OMINO: return 'O';
+		case HEX: return 'H';
+		case IAMOND: return 'I';
+		case OCTASQUARE: return 'o';
+		case TRIHEX: return 'T';
+		case ABOLO: return 'A';
+		case DRAFTER: return 'D';
+		case KITE: return 'K';
+		case HALFCAIRO: return 'h';
+		case BEVELHEX: return 'B';
+		default: return '?';
+	}
+}
