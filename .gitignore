@@ -63,24 +63,25 @@ requirements.txt
 *.nbconvert.ipynb
 
 # ---- LaTeX (paper/) ----
-*.aux
-*.bbl
-*.bcf
-*.blg
-*.fdb_latexmk
-*.fls
-*.lof
-*.log
-*.lot
-*.nav
-*.out
-*.run.xml
-*.snm
-*.synctex.gz
-*.toc
-*.vrb
-*.dvi
-*.ps
+# Scoped to paper/ so benchmark .log files elsewhere are not swallowed.
+paper/**/*.aux
+paper/**/*.bbl
+paper/**/*.bcf
+paper/**/*.blg
+paper/**/*.fdb_latexmk
+paper/**/*.fls
+paper/**/*.lof
+paper/**/*.log
+paper/**/*.lot
+paper/**/*.nav
+paper/**/*.out
+paper/**/*.run.xml
+paper/**/*.snm
+paper/**/*.synctex.gz
+paper/**/*.toc
+paper/**/*.vrb
+paper/**/*.dvi
+paper/**/*.ps
 # Don't ignore the actual manuscripts:
 !paper/**/*.pdf
 
@@ -92,6 +93,9 @@ tmp/
 *.tmp
 core
 core.*
+
+# Per-regression sat I/O scratch (committed run logs live in results/).
+benchmarks/kaplan/work/
 
 # Cairo-generated viz PDFs from ad-hoc runs (committed ones live under data/results/)
 src/sat/*.pdf

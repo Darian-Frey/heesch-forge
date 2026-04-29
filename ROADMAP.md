@@ -10,9 +10,11 @@ This document tracks phases, gates, and current status. The proposal in `PROPOSA
 
 ## Phase status overview
 
+*Updated 2026-04-29: M0.1–M0.4 complete; phase-0 progress 4/6 milestones.*
+
 | Phase | Layers | Status | Target completion |
 |-------|--------|--------|-------------------|
-| 0 — Setup | — | 🟡 in progress | +2 weeks |
+| 0 — Setup | — | 🟢 active (4/6) | +2 weeks |
 | 1 — Engineering | L1 | ⚪ not started | +8 weeks |
 | 2 — Hybrid solver | L2 | ⚪ not started | +16 weeks |
 | 3 — Lateral grids | L4 | ⚪ not started | parallel from Phase 2 |
@@ -30,10 +32,10 @@ Legend: ✅ done · 🟢 active · 🟡 in progress · ⚪ not started · 🔴 b
 
 ### Milestones
 
-- [ ] M0.1 — Git repo created (private initially); CI configured.
-- [ ] M0.2 — Fork `isohedral/heesch-sat` into `src/sat/`. Build verified on Linux Mint.
-- [ ] M0.3 — Pull Kaplan's published H≥1 polyomino dataset into `data/kaplan-2022/`.
-- [ ] M0.4 — Reproduce Kaplan's H values for n ≤ 12 polyominoes; lock as regression baseline.
+- [x] M0.1 — Git repo created; scaffold pushed (5 .md files + directory layout + .gitignore).
+- [x] M0.2 — Vendored `isohedral/heesch-sat` into `src/sat/` (upstream SHA `1adb3720`); Linux build patched (g++/c++20, missing `isohedral.o`, missing `<map>` include); all five binaries (gen/sat/viz/surrounds/report) build and run on Ubuntu 24.04.
+- [x] M0.3 — Kaplan 2022 dataset (`heesch_dataset.tar.gz`, sha256 `c655cf54…0929b`) extracted to `data/kaplan-2022/omino/`; provenance recorded in `data/kaplan-2022/PROVENANCE.md`.
+- [x] M0.4 — Regression baseline locked: `benchmarks/kaplan/run_regression.py` reproduces all 174 published Hc/Hh values for n ∈ {7, 8, 11, 12} (with `-isohedral -hh`); raw log at `benchmarks/kaplan/results/m0.4-baseline-7-8-11-12.log`. Full n ≤ 12 sweep deferred (dekomino set is multi-hour).
 - [ ] M0.5 — Set up benchmark harness (`benchmarks/`) with per-shape timing, conflict counts, decision counts.
 - [ ] M0.6 — Initial LITERATURE.md populated with primary references and PDFs filed.
 
@@ -198,4 +200,13 @@ When a planned file is created, move its row from this table into the "Live now"
 
 ## Status notes (latest first)
 
-**29 April 2026.** Proposal v0.1 drafted. Roadmap v0.1 drafted. Repo live at github.com/Darian-Frey/heesch-forge (empty, M0.1 effectively complete pending push). Next action: M0.2 (fork heesch-sat into src/sat/).
+**29 April 2026 (evening).** M0.1–M0.4 closed in one session.
+
+- M0.1: scaffold (5 .md + directory layout + `.gitignore`) pushed; commit `7af2f94` on `main`.
+- M0.2: vendored upstream `heesch-sat` at SHA `1adb3720` as `src/sat/` (commit `7767cd4` on branch `m0.2-vendor-upstream`); Linux build patch on top (commit `a750519` on `m0.3-linux-build`) — fixed `-std=c++17` → c++20 (templated lambdas in `tileio.h`), missing `isohedral.o` in `OBJECTS` (sat & surrounds need it for `IsohedralChecker`), and missing `#include <map>` in `isohedral.cpp` (libstdc++ doesn't pull it in transitively the way libc++ does). All five binaries build and run; `ldd ./sat` confirms libcryptominisat5 resolved via `-Wl,-rpath,/usr/local/lib`.
+- M0.3: Kaplan dataset tarball downloaded, sha256 `c655cf54…0929b`, `omino/` files extracted into `data/kaplan-2022/`. Provenance and licensing notes in `data/kaplan-2022/PROVENANCE.md`.
+- M0.4: regression harness `benchmarks/kaplan/run_regression.py` reproduces all 174 published Hc/Hh values for n ∈ {7, 8, 11, 12} (sat invoked with `-isohedral -hh`). 269.6 s wall on a ThinkPad P15 Gen 2i. Raw log committed at `benchmarks/kaplan/results/m0.4-baseline-7-8-11-12.log`. The full n ≤ 12 sweep (adds 1390 dekominoes; estimated multi-hour) has been left for a separate, longer run.
+
+Next action: M0.5 (benchmark harness with per-shape timing/conflicts/decisions) and M0.6 (LITERATURE.md primary references).
+
+**29 April 2026 (afternoon).** Proposal v0.1 drafted. Roadmap v0.1 drafted. Repo live at github.com/Darian-Frey/heesch-forge (empty, M0.1 effectively complete pending push). Next action: M0.2 (fork heesch-sat into src/sat/).
