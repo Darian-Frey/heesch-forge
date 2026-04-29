@@ -10,11 +10,11 @@ This document tracks phases, gates, and current status. The proposal in `PROPOSA
 
 ## Phase status overview
 
-*Updated 2026-04-29: M0.1–M0.5 complete; phase-0 progress 5/6 milestones.*
+*Updated 2026-04-29: M0.1–M0.6 complete; Phase 0 closed pending PR merges.*
 
 | Phase | Layers | Status | Target completion |
 |-------|--------|--------|-------------------|
-| 0 — Setup | — | 🟢 active (5/6) | +2 weeks |
+| 0 — Setup | — | ✅ done (6/6) | met |
 | 1 — Engineering | L1 | ⚪ not started | +8 weeks |
 | 2 — Hybrid solver | L2 | ⚪ not started | +16 weeks |
 | 3 — Lateral grids | L4 | ⚪ not started | parallel from Phase 2 |
@@ -37,7 +37,7 @@ Legend: ✅ done · 🟢 active · 🟡 in progress · ⚪ not started · 🔴 b
 - [x] M0.3 — Kaplan 2022 dataset (`heesch_dataset.tar.gz`, sha256 `c655cf54…0929b`) extracted to `data/kaplan-2022/omino/`; provenance recorded in `data/kaplan-2022/PROVENANCE.md`.
 - [x] M0.4 — Regression baseline locked: `benchmarks/kaplan/run_regression.py` reproduces all 174 published Hc/Hh values for n ∈ {7, 8, 11, 12} (with `-isohedral -hh`); raw log at `benchmarks/kaplan/results/m0.4-baseline-7-8-11-12.log`. Full n ≤ 12 sweep deferred (dekomino set is multi-hour).
 - [x] M0.5 — Benchmark harness `benchmarks/baseline/` records per-shape wall time, SAT conflicts/decisions/propagations, solve-call counts, and corona depth via a new `-stats` flag in `src/sat/src/sat.cpp` plus a `runAndAccount` accumulator in `HeeschSolver`. Baseline JSONL at `benchmarks/baseline/results/m0.5-baseline.jsonl`; canonical run log at `benchmarks/baseline/results/m0.5-baseline-7-8-11-12.log`. Failsafe (`-old`) path is not instrumented.
-- [ ] M0.6 — Initial LITERATURE.md populated with primary references and PDFs filed.
+- [x] M0.6 — `LITERATURE.md` carries 25 annotated entries (Heesch primary, aperiodic monotile, search techniques, ML, theory, software). Canonical BibTeX at `paper/lit/bibtex.bib`; open-access PDFs are fetched on demand by `paper/lit/fetch_pdfs.sh` (PDFs gitignored). Verification roster at the top of `LITERATURE.md`: A.8, F.1, F.3 promoted to [EST] from M0.2/M0.3/M0.4 work, the rest are [VERIFY] until a maintainer reads them.
 
 ### Exit criteria
 
@@ -199,6 +199,12 @@ When a planned file is created, move its row from this table into the "Live now"
 ---
 
 ## Status notes (latest first)
+
+**29 April 2026 (night).** M0.6 closed; **Phase 0 done**.
+
+- M0.6: structural literature pass. `LITERATURE.md` (already drafted in v0.1 with 25 annotated entries across six topic groups) is now backed by `paper/lit/bibtex.bib` (29 BibTeX records, citation keys mirror section IDs — `KaplanA8` etc.), a `paper/lit/fetch_pdfs.sh` script for open-access PDFs, and a `paper/lit/.gitignore` that keeps fetched PDFs local-only (rights vary, repo stays small). `LITERATURE.md` gains a "Bibliography metadata and verification" section that promotes A.8 (Kaplan 2022 polyforms), F.1 (heesch-sat), and F.3 (Kaplan dataset) to `[EST]` on the back of M0.2–M0.4 hands-on work; everything else is implicitly `[VERIFY]` per CLAUDE.md's "never cite what hasn't been read" rule. The most suspicious tag flagged for next-pass attention: E.2 `arXiv:2603.27827` — submission stamp encodes 2026-03, confirm the ID before citing.
+
+Phase 0 exit criterion (`make test` green on baseline; benchmark report archived) is met by M0.4 + M0.5 jointly. Ready to open Phase 1.
 
 **29 April 2026 (late evening).** M0.5 closed.
 

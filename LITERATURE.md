@@ -4,6 +4,22 @@ Annotated bibliography. Organised by topic, not chronology. Each entry has a one
 
 ---
 
+## Bibliography metadata and verification
+
+- **BibTeX records** for every entry below: [`paper/lit/bibtex.bib`](./paper/lit/bibtex.bib). Citation keys are `<Surname><SectionID>`, e.g. `KaplanA8` for the 2022 polyforms paper.
+- **PDF filing** is local-only; PDFs are gitignored. Run [`paper/lit/fetch_pdfs.sh`](./paper/lit/fetch_pdfs.sh) to populate the open-access subset (arXiv + CDM); paywalled items need institutional access. See [`paper/lit/README.md`](./paper/lit/README.md) for the convention.
+- **Verification status.** Per CLAUDE.md's "never cite what hasn't been read" rule, each entry below carries an implicit `[VERIFY]` until a maintainer reads it and a future commit promotes it to `[EST]`. The currently-promoted entries are:
+
+| Section | Entry | Why [EST] |
+|---------|-------|-----------|
+| A.8 | Kaplan 2022, *Heesch Numbers of Unmarked Polyforms* | Hc/Hh values reproduced from this paper's dataset by `benchmarks/kaplan/` (M0.4); reading at section level. |
+| F.1 | Kaplan, *heesch-sat* | Vendored at SHA `1adb3720` and built locally (M0.2/M0.3). |
+| F.3 | Kaplan, *Heesch dataset* | Downloaded, hashed, parsed, regression-tested (M0.4). |
+
+Entries flagged with a `[VERIFY]` `note:` field in `bibtex.bib` need their identifier or attribution confirmed before they can be cited in any heesch-forge writeup, regardless of reading status. The most suspicious right now: `HyperbolicMonotileE2` (LITERATURE.md gives `arXiv:2603.27827`, which encodes a 2026-03 submission stamp — confirm before citing).
+
+---
+
 ## A. Heesch problem — primary literature
 
 ### A.1 Heesch, H. (1968). *Reguläres Parkettierungsproblem.* Westdeutscher Verlag.

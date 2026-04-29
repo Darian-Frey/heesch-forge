@@ -1,0 +1,6 @@
+# Third-party literature PDFs are fetched on demand (see fetch_pdfs.sh)
+# and should never be committed back to the heesch-forge repo: redistribution
+# rights vary per publisher, and the bibtex + fetch script make them
+# reproducibly retrievable. Each contributor populates their own copy
+# locally.
+*.pdf

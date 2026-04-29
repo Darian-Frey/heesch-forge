@@ -1,0 +1,293 @@
+% heesch-forge canonical bibliography. Citation keys mirror the section
+% IDs in ../../LITERATURE.md (A1, A2, ... F4) so a paper written for
+% heesch-forge can \cite{KaplanA8} (Kaplan 2022 polyforms paper) without
+% inventing a parallel naming scheme. Annotations beyond the BibTeX
+% record itself live in LITERATURE.md.
+%
+% Verification status: see per-entry Status: line in LITERATURE.md.
+% Anything still tagged [VERIFY] needs a maintainer pass before it is
+% cited in a heesch-forge writeup (CLAUDE.md: never cite what hasn't
+% been read).
+
+% ---------------------------------------------------------------------
+% A. Heesch problem -- primary literature
+% ---------------------------------------------------------------------
+
+@book{HeeschA1,
+  author    = {Heesch, Heinrich},
+  title     = {Regul{\"a}res Parkettierungsproblem},
+  publisher = {Westdeutscher Verlag},
+  address   = {K{\"o}ln/Opladen},
+  year      = {1968},
+}
+
+@article{FontaineA2,
+  author  = {Fontaine, Anne},
+  title   = {An Infinite Number of Plane Figures with {H}eesch Number Two},
+  journal = {Journal of Combinatorial Theory, Series A},
+  volume  = {57},
+  number  = {1},
+  pages   = {151--156},
+  year    = {1991},
+  doi     = {10.1016/0097-3165(91)90014-8},
+}
+
+@article{MannA3,
+  author  = {Mann, Casey},
+  title   = {{H}eesch's Tiling Problem},
+  journal = {The American Mathematical Monthly},
+  volume  = {111},
+  number  = {6},
+  pages   = {509--517},
+  year    = {2004},
+  doi     = {10.1080/00029890.2004.11920106},
+}
+
+@article{MannThomasA4,
+  author  = {Mann, Casey and Thomas, Bryan},
+  title   = {{H}eesch Numbers of Edge-Marked Polyforms},
+  journal = {Experimental Mathematics},
+  volume  = {25},
+  number  = {3},
+  pages   = {281--294},
+  year    = {2016},
+  doi     = {10.1080/10586458.2015.1096867},
+}
+
+@article{BasicA5,
+  author  = {Ba{\v{s}}i{\'c}, Bojan},
+  title   = {The {H}eesch number for multiple prototiles is unbounded},
+  journal = {Comptes Rendus Math{\'e}matique},
+  volume  = {353},
+  number  = {7},
+  pages   = {665--667},
+  year    = {2015},
+  doi     = {10.1016/j.crma.2015.04.011},
+}
+
+@article{BasicSlivkovaA6,
+  author  = {Ba{\v{s}}i{\'c}, Bojan and Slivkov{\'a}, Aleksandra},
+  title   = {Asymptotical Unboundedness of the {H}eesch Number in $\mathbb{E}^d$ for $d \to \infty$},
+  journal = {Discrete \& Computational Geometry},
+  year    = {2020},
+  note    = {[VERIFY] -- volume/issue/pages still to be confirmed against the published version.},
+}
+
+@article{BasicA7,
+  author  = {Ba{\v{s}}i{\'c}, Bojan},
+  title   = {A Figure with {H}eesch Number 6: Pushing a Two-Decade-Old Boundary},
+  journal = {The Mathematical Intelligencer},
+  year    = {2021},
+  note    = {[VERIFY] -- volume/issue/pages and the promised follow-up article still to be located.},
+}
+
+@article{KaplanA8,
+  author  = {Kaplan, Craig S.},
+  title   = {{H}eesch Numbers of Unmarked Polyforms},
+  journal = {Contributions to Discrete Mathematics},
+  volume  = {17},
+  number  = {2},
+  pages   = {150--171},
+  year    = {2022},
+  url     = {https://cdm.ucalgary.ca/article/view/72886},
+  eprint  = {2105.09438},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.CG},
+}
+
+@inproceedings{KaplanA9,
+  author    = {Kaplan, Craig S.},
+  title     = {Detecting Isohedral Polyforms with a {SAT} Solver},
+  booktitle = {GASCom 2024 Abstracts},
+  pages     = {118--122},
+  year      = {2024},
+  eprint    = {2406.16407},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.CG},
+}
+
+% ---------------------------------------------------------------------
+% B. Aperiodic monotile -- for technique transfer
+% ---------------------------------------------------------------------
+
+@article{SmithMyersKaplanGoodmanStraussB1,
+  author  = {Smith, David and Myers, Joseph Samuel and Kaplan, Craig S. and Goodman-Strauss, Chaim},
+  title   = {An aperiodic monotile},
+  journal = {Combinatorial Theory},
+  volume  = {4},
+  number  = {1},
+  pages   = {6},
+  year    = {2024},
+  doi     = {10.5070/C64163843},
+  eprint  = {2303.10798},
+  archivePrefix = {arXiv},
+  primaryClass  = {math.CO},
+}
+
+@article{SmithMyersKaplanGoodmanStraussB2,
+  author = {Smith, David and Myers, Joseph Samuel and Kaplan, Craig S. and Goodman-Strauss, Chaim},
+  title  = {A chiral aperiodic monotile},
+  year   = {2024},
+  note   = {Companion paper to B1; [VERIFY] arXiv ID and final venue.},
+}
+
+% ---------------------------------------------------------------------
+% C. Combinatorial-search techniques -- for Layer 1 / 2
+% ---------------------------------------------------------------------
+
+@incollection{KnuthC1,
+  author    = {Knuth, Donald E.},
+  title     = {Dancing Links},
+  booktitle = {Millennial Perspectives in Computer Science},
+  publisher = {Palgrave},
+  year      = {2000},
+  pages     = {187--214},
+  eprint    = {cs/0011047},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.DS},
+}
+
+@misc{CaDiCaLKissatC2,
+  author = {Biere, Armin and others},
+  title  = {{CaDiCaL} and {Kissat}: SAT solvers},
+  howpublished = {\url{https://github.com/arminbiere/}},
+  note   = {SAT Competition implementations.},
+}
+
+@misc{BreakIDC3,
+  author = {Devriendt, Jo and Bogaerts, Bart and Bruynooghe, Maurice and Denecker, Marc},
+  title  = {{BreakID}: Static Symmetry Breaker for {SAT}},
+  howpublished = {\url{https://bitbucket.org/krr/breakid}},
+  note   = {[VERIFY] -- pin a specific paper / commit before citing.},
+}
+
+@misc{PBLibC4,
+  title = {{PBLib}: A Library for Encoding Pseudo-Boolean Constraints},
+  howpublished = {\url{http://tools.computational-logic.org/content/pblib.php}},
+  note  = {[VERIFY] -- attribution (Philipp / Steinke?) and final venue.},
+}
+
+@misc{MaxSATC5,
+  author = {Ignatiev, Alexey and Morgado, Antonio and Marques-Silva, Joao and Berg, Jeremias and others},
+  title  = {{RC2} and {EvalMaxSAT}: MaxSAT solvers},
+  note   = {[VERIFY] -- separate cite each tool's primary publication once selected for M1.5.},
+}
+
+@misc{MallobC6,
+  author = {Schreiber, Dominik and Sanders, Peter},
+  title  = {{Mallob}: Distributed {SAT} solver with clause sharing},
+  howpublished = {\url{https://github.com/domschrei/mallob}},
+  note   = {[VERIFY] -- pin a specific paper before citing.},
+}
+
+% ---------------------------------------------------------------------
+% D. Machine learning for combinatorial discovery -- for Layer 3
+% ---------------------------------------------------------------------
+
+@misc{WagnerD1,
+  author = {Wagner, Adam Zsolt},
+  title  = {Constructions in combinatorics via neural networks},
+  year   = {2021},
+  eprint = {2104.14516},
+  archivePrefix = {arXiv},
+  primaryClass  = {math.CO},
+}
+
+@misc{TruterD2,
+  author = {Truter, Mark},
+  title  = {Deep Reinforcement Learning for Fano Hypersurfaces},
+  year   = {2024},
+  note   = {[VERIFY] -- arXiv ID still to be located; if author name is wrong, the paper is the 2024 RL-for-Fano-hypersurfaces preprint.},
+}
+
+@article{LiuTilinGNND3,
+  author  = {Liu, Hao and Wang, Yi and Ren, Bo and Pickett, Heather and Yang, Yong-Liang and Lu, Lin},
+  title   = {{TilinGNN}: Learning to Tile with Self-Supervised Graph Neural Network},
+  journal = {ACM Transactions on Graphics},
+  volume  = {39},
+  number  = {4},
+  pages   = {129},
+  year    = {2020},
+  doi     = {10.1145/3386569.3392398},
+}
+
+@inproceedings{ChenTianD4,
+  author    = {Chen, Xinyun and Tian, Yuandong},
+  title     = {Learning to Perform Local Rewriting for Combinatorial Optimization},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
+  volume    = {32},
+  year      = {2019},
+  note      = {LITERATURE.md cites year 2020; the NeurIPS publication year is 2019. [VERIFY] preferred citation form.},
+}
+
+@inproceedings{SelsamBjornerD5,
+  author    = {Selsam, Daniel and Bj{\o}rner, Nikolaj},
+  title     = {Guiding High-Performance {SAT} Solvers with Unsat-Core Predictions},
+  booktitle = {Theory and Applications of Satisfiability Testing -- {SAT} 2019},
+  series    = {Lecture Notes in Computer Science},
+  volume    = {11628},
+  pages     = {336--353},
+  year      = {2019},
+  publisher = {Springer},
+  doi       = {10.1007/978-3-030-24258-9_24},
+}
+
+% ---------------------------------------------------------------------
+% E. Theoretical / topological obstructions -- for Layer 5
+% ---------------------------------------------------------------------
+
+@misc{AkhmedovE1,
+  author = {Akhmedov, Azer},
+  title  = {Cayley graphs with an infinite {H}eesch number},
+  year   = {2014},
+  eprint = {1412.0358},
+  archivePrefix = {arXiv},
+  primaryClass  = {math.GR},
+  note   = {[VERIFY] -- author and exact title against arXiv.},
+}
+
+@misc{HyperbolicMonotileE2,
+  title = {Unboundedness of the {H}eesch Number for Hyperbolic Convex Monotiles},
+  note  = {[VERIFY] -- LITERATURE.md gives arXiv:2603.27827, which encodes a 2026-03 submission. Confirm the ID is current and the authors before citing.},
+}
+
+@misc{GoodmanStraussE3,
+  author = {Goodman-Strauss, Chaim},
+  title  = {Open Questions in Tiling},
+  year   = {2000},
+  howpublished = {\url{https://strauss.hosted.uark.edu/papers/survey.pdf}},
+  note   = {Survey of open problems including the connection between Heesch's
+            problem and the undecidability of the domino problem.},
+}
+
+% ---------------------------------------------------------------------
+% F. Software and datasets
+% ---------------------------------------------------------------------
+
+@misc{HeeschSatF1,
+  author = {Kaplan, Craig S.},
+  title  = {{heesch-sat}: a {SAT}-based {H}eesch number solver},
+  year   = {2021--present},
+  howpublished = {\url{https://github.com/isohedral/heesch-sat}},
+  note   = {Vendored at upstream commit 1adb3720 as src/sat/.},
+}
+
+@misc{MyersPolyformF2,
+  author = {Myers, Joseph Samuel},
+  title  = {Polyform tiling software},
+  howpublished = {\url{https://www.polyomino.org.uk/mathematics/polyform-tiling/}},
+}
+
+@misc{KaplanDatasetF3,
+  author = {Kaplan, Craig S.},
+  title  = {Heesch dataset},
+  year   = {2021},
+  howpublished = {\url{https://cs.uwaterloo.ca/~csk/heesch/}},
+  note   = {Mirror of the polyomino subset at data/kaplan-2022/omino/. SHA-256 of source archive: c655cf54679a34fb3af992ec75b8a85e6210145e294c3fdf254cdb9235d0929b.},
+}
+
+@misc{MannPolyformDBF4,
+  author = {Mann, Casey},
+  title  = {Edge-Marked Polyform Database},
+  note   = {[VERIFY] -- LITERATURE.md says the older URL is math.uttyler.edu/polyformDB/; current location to be checked.},
+}
