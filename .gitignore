@@ -1,0 +1,126 @@
+# ---- C / C++ build artefacts (src/sat, src/dlx, src/theory) ----
+*.o
+*.a
+*.so
+*.so.*
+*.dylib
+*.dll
+*.lib
+*.exp
+*.obj
+*.exe
+*.out
+*.app
+*.d
+*.gch
+*.pch
+*.tmp
+compile_commands.json
+.cache/
+build/
+cmake-build-*/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile.local
+
+# heesch-sat upstream produces these in src/sat/ when `make` runs.
+# Keep the sources, ignore the binaries.
+src/sat/gen
+src/sat/sat
+src/sat/viz
+src/sat/surrounds
+src/sat/report
+
+# ---- Python (Layer 3 RL stack, uv-managed) ----
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg
+*.egg-info/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+.hypothesis/
+
+# Virtual envs — never commit
+.venv/
+venv/
+env/
+.python-version
+
+# uv lockfile is committed; requirements.txt is forbidden per CLAUDE.md
+requirements.txt
+
+# ---- Jupyter ----
+.ipynb_checkpoints/
+*.nbconvert.ipynb
+
+# ---- LaTeX (paper/) ----
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.lof
+*.log
+*.lot
+*.nav
+*.out
+*.run.xml
+*.snm
+*.synctex.gz
+*.toc
+*.vrb
+*.dvi
+*.ps
+# Don't ignore the actual manuscripts:
+!paper/**/*.pdf
+
+# ---- Solver / benchmark transient output ----
+# Raw logs are committed under benchmarks/ per CLAUDE.md epistemic discipline,
+# so do NOT blanket-ignore *.log here. Ignore only known scratch dirs.
+scratch/
+tmp/
+*.tmp
+core
+core.*
+
+# Cairo-generated viz PDFs from ad-hoc runs (committed ones live under data/results/)
+src/sat/*.pdf
+
+# ---- Datasets — committed under data/, but ignore unpacked archives ----
+data/**/*.tar
+data/**/*.tar.gz
+data/**/*.tgz
+data/**/*.zip
+
+# ---- Editors / IDEs ----
+.vscode/
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+*.iml
+*.swp
+*.swo
+*~
+.\#*
+\#*\#
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---- Secrets / local config ----
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
