@@ -1,33 +1,43 @@
-INCLUDES = -I/usr/local/include/cryptominisat5 -I/usr/local/include -I/opt/local/include -I/opt/local/include/cairo
+# heesch-forge Linux build of upstream isohedral/heesch-sat.
+# See ../UPSTREAM.md for the original macOS Makefile and the rationale
+# for each change below (M0.3).
 
-CXX = clang++
+INCLUDES = -I/usr/local/include/cryptominisat5 -I/usr/local/include \
+	$(shell pkg-config --cflags cairo)
+
+CXX = g++
 # OPT = -g
-OPT = -O3  -DNDEBUG
-CXXFLAGS = -std=c++17 -Wall -MMD $(INCLUDES) $(OPT) -stdlib=libc++ \
-	-isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk 
-LIBS = -L/usr/local/lib -rpath /usr/local/lib -lcryptominisat5
+OPT = -O3 -DNDEBUG
+# Upstream Makefile claimed -std=c++17, but tileio.h uses templated lambdas
+# (C++20). Bumped here; recorded in ../UPSTREAM.md.
+CXXFLAGS = -std=c++20 -Wall -MMD $(INCLUDES) $(OPT)
+LIBS = -L/usr/local/lib -Wl,-rpath,/usr/local/lib -lcryptominisat5
+VIZ_LIBS = $(shell pkg-config --libs cairo)
 
-OBJECTS = sat.o viz.o surrounds.o gen.o report.o
+# isohedral.o is required by sat and surrounds (via heesch.h's
+# IsohedralChecker). Upstream Makefile omits it; recorded in ../UPSTREAM.md.
+OBJECTS = sat.o viz.o surrounds.o gen.o report.o isohedral.o
 DEPENDS = ${OBJECTS:.o=.d}
 
 all: sat viz gen surrounds report
 
-sat: sat.o 
-	$(CXX) $(LIBS) -o sat sat.o
+# Link order matters with GNU ld: object files before libraries.
+sat: sat.o isohedral.o
+	$(CXX) -o sat sat.o isohedral.o $(LIBS)
 
 viz: viz.o
-	$(CXX) $(LIBS) -L/opt/local/lib -lcairo -o viz viz.o 
+	$(CXX) -o viz viz.o $(LIBS) $(VIZ_LIBS)
 
 gen: gen.o
-	$(CXX) $(LIBS) -o gen gen.o
+	$(CXX) -o gen gen.o $(LIBS)
 
-surrounds: surrounds.o 
-	$(CXX) $(LIBS) -o surrounds surrounds.o
+surrounds: surrounds.o isohedral.o
+	$(CXX) -o surrounds surrounds.o isohedral.o $(LIBS)
 
-report: report.o 
-	$(CXX) $(LIBS) -o report report.o
+report: report.o
+	$(CXX) -o report report.o $(LIBS)
 
-# tile: tile.o 
+# tile: tile.o
 #	$(CXX) $(LIBS) -o tile tile.o
 
 -include ${DEPENDS}
@@ -35,4 +45,4 @@ report: report.o
 .PHONY: clean
 
 clean:
-	rm ${OBJECTS} ${DEPENDS}
+	rm -f ${OBJECTS} ${DEPENDS} sat viz gen surrounds report

@@ -7,7 +7,7 @@ modernisation plan.
 
 | Field | Value |
 |-------|-------|
-| Upstream URL | https://github.com/isohedral/heesch-sat |
+| Upstream URL | <https://github.com/isohedral/heesch-sat> |
 | Upstream commit SHA | `1adb37204013b96b62b954a616265e49d7cf21ad` |
 | Upstream commit date | 2026-02-17 |
 | Vendored on | 2026-04-29 |
@@ -17,30 +17,52 @@ modernisation plan.
 
 ## Known upstream-vs-Linux divergence
 
-The upstream `src/sat/src/Makefile` is written for macOS + MacPorts and will
-not build on Linux without patching. Issues, all to be addressed under **M0.3
-(local build patch)**, not as a vendor change:
+Issues found while making upstream build on Ubuntu 24.04 with g++ 13.3 under
+**M0.3 (local build patch)**. The fixes live in their own commit, not in the
+vendor import.
 
-- `CXX = clang++` with `-stdlib=libc++` — drop `-stdlib` on Linux (use the
-  default libstdc++) or install libc++ explicitly.
-- `-isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk` — macOS only,
-  must be removed on Linux.
-- `INCLUDES` points at `/opt/local/include` (MacPorts) and
-  `/usr/local/include/cryptominisat5`; on Ubuntu these become
-  `/usr/include/cryptominisat5` (if installed from source to default prefix)
-  and `/usr/include/cairo` (Ubuntu `libcairo2-dev`).
-- `LIBS = -L/usr/local/lib -rpath /usr/local/lib -lcryptominisat5` — the bare
-  `-rpath` flag is a clang-on-mac convenience; with GNU ld it must be
-  `-Wl,-rpath,/usr/local/lib`.
+### Makefile (macOS/MacPorts assumptions)
 
-The Linux-side patch will live in a separate commit (`m0.3-…`) so the vendor
-import here remains a clean snapshot.
+- `CXX = clang++` with `-stdlib=libc++` — switched to `g++` and dropped the
+  flag (libstdc++ is default).
+- `-isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk` — removed.
+- `INCLUDES` referenced `/opt/local/include` (MacPorts). Replaced with
+  `pkg-config --cflags cairo` (Ubuntu `libcairo2-dev`); CryptoMiniSat headers
+  stay at `/usr/local/include/cryptominisat5/` since CryptoMiniSat 5.14 is
+  built from source and installed there.
+- `LIBS = -L/usr/local/lib -rpath /usr/local/lib …` — the bare `-rpath` is a
+  clang-on-mac convenience; rewritten as `-Wl,-rpath,/usr/local/lib` for GNU
+  ld. CryptoMiniSat does not ship a `.pc` file, so its flags remain
+  hard-coded; cairo flags use `pkg-config`.
+- Link order: upstream wrote `$(CXX) $(LIBS) -o sat sat.o`; GNU ld is strict
+  about putting object files **before** their libraries. Reordered to
+  `$(CXX) -o sat sat.o $(LIBS)`.
+- `clean: rm ${OBJECTS} ${DEPENDS}` — added `-f` and the binaries to the
+  removal list so a fresh tree can `make clean` without errors.
+
+### Genuine upstream bugs (would also bite on macOS with a stricter compiler)
+
+- **`-std=c++17` is wrong.** `tileio.h:392` uses **templated lambdas**
+  (`[]<typename Grid>(...) { … }`), a C++20 feature. Bumped to
+  `-std=c++20`. Upstream presumably built with a clang that silently accepted
+  the construct; g++ 13 in C++17 mode rejects it.
+- **`OBJECTS` missing `isohedral.o`.** Upstream's `OBJECTS = sat.o viz.o
+  surrounds.o gen.o report.o` never compiles `isohedral.cpp`, even though
+  `sat.cpp` and `surrounds.cpp` (via `heesch.h`) call
+  `IsohedralChecker::tilesIsohedrally`, which is *defined* there. With GNU
+  ld this is an undefined-reference link error. Added `isohedral.o` to
+  `OBJECTS` and to the `sat` and `surrounds` link lines.
+- **`isohedral.cpp` missing `#include <map>`.** The file uses
+  `map<Factor, vector<…>>` but only includes `<iostream>`, `<functional>`,
+  `<iterator>`, `<set>`. libc++ pulls `<map>` in transitively from one of
+  those; libstdc++ does not. Added an explicit `#include <map>`.
 
 ## Build dependencies (upstream targets `gen sat viz surrounds report`)
 
-- C++17 compiler (g++ ≥ 9 or clang++ ≥ 10).
+- C++20 compiler (g++ ≥ 10 or clang++ ≥ 13). Upstream Makefile says C++17
+  but `tileio.h` uses templated lambdas — see "Genuine upstream bugs" below.
 - **CryptoMiniSat 5** — must be built from source from
-  https://github.com/msoos/cryptominisat ; no Ubuntu package is recent enough.
+  <https://github.com/msoos/cryptominisat> ; no Ubuntu package is recent enough.
 - **Cairo** — `libcairo2-dev` on Ubuntu; only required for the optional `viz`
   PDF-rendering tool. The other four binaries do not need it.
 - GNU make.
