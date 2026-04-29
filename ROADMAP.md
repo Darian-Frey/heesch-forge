@@ -10,11 +10,11 @@ This document tracks phases, gates, and current status. The proposal in `PROPOSA
 
 ## Phase status overview
 
-*Updated 2026-04-29: M0.1–M0.4 complete; phase-0 progress 4/6 milestones.*
+*Updated 2026-04-29: M0.1–M0.5 complete; phase-0 progress 5/6 milestones.*
 
 | Phase | Layers | Status | Target completion |
 |-------|--------|--------|-------------------|
-| 0 — Setup | — | 🟢 active (4/6) | +2 weeks |
+| 0 — Setup | — | 🟢 active (5/6) | +2 weeks |
 | 1 — Engineering | L1 | ⚪ not started | +8 weeks |
 | 2 — Hybrid solver | L2 | ⚪ not started | +16 weeks |
 | 3 — Lateral grids | L4 | ⚪ not started | parallel from Phase 2 |
@@ -36,7 +36,7 @@ Legend: ✅ done · 🟢 active · 🟡 in progress · ⚪ not started · 🔴 b
 - [x] M0.2 — Vendored `isohedral/heesch-sat` into `src/sat/` (upstream SHA `1adb3720`); Linux build patched (g++/c++20, missing `isohedral.o`, missing `<map>` include); all five binaries (gen/sat/viz/surrounds/report) build and run on Ubuntu 24.04.
 - [x] M0.3 — Kaplan 2022 dataset (`heesch_dataset.tar.gz`, sha256 `c655cf54…0929b`) extracted to `data/kaplan-2022/omino/`; provenance recorded in `data/kaplan-2022/PROVENANCE.md`.
 - [x] M0.4 — Regression baseline locked: `benchmarks/kaplan/run_regression.py` reproduces all 174 published Hc/Hh values for n ∈ {7, 8, 11, 12} (with `-isohedral -hh`); raw log at `benchmarks/kaplan/results/m0.4-baseline-7-8-11-12.log`. Full n ≤ 12 sweep deferred (dekomino set is multi-hour).
-- [ ] M0.5 — Set up benchmark harness (`benchmarks/`) with per-shape timing, conflict counts, decision counts.
+- [x] M0.5 — Benchmark harness `benchmarks/baseline/` records per-shape wall time, SAT conflicts/decisions/propagations, solve-call counts, and corona depth via a new `-stats` flag in `src/sat/src/sat.cpp` plus a `runAndAccount` accumulator in `HeeschSolver`. Baseline JSONL at `benchmarks/baseline/results/m0.5-baseline.jsonl`; canonical run log at `benchmarks/baseline/results/m0.5-baseline-7-8-11-12.log`. Failsafe (`-old`) path is not instrumented.
 - [ ] M0.6 — Initial LITERATURE.md populated with primary references and PDFs filed.
 
 ### Exit criteria
@@ -199,6 +199,12 @@ When a planned file is created, move its row from this table into the "Live now"
 ---
 
 ## Status notes (latest first)
+
+**29 April 2026 (late evening).** M0.5 closed.
+
+- M0.5: `src/sat/` patched to instrument the default-path SAT solve loop. `HeeschSolver` gained four `uint64_t` cumulative counters (conflicts, decisions, propagations, solve-call count) populated by a new private `runAndAccount` helper that wraps every `CMSat::SATSolver::solve()` reachable from `HeeschSolver::solve()` (five sites: the main corona loop, the two `-hh` final-solver fallbacks, `iterateUntilSimplyConnected`, and `checkIsohedralTiling`). `sat` gained a `-stats <file>` CLI flag that emits one JSON object per processed shape (schema in `benchmarks/baseline/README.md`). Wrapping that, `benchmarks/baseline/run_baseline.py` produces a per-shape JSONL of dataset Hc/Hh, sat Hc/Hh, classification, levels, wall time, and SAT counts. Baseline numbers on n ∈ {7, 8, 11, 12} (174 shapes, 256.2 s wall): p50 1.42 s/shape, p95 3.53 s, max 4.53 s; 612 k SAT conflicts, 4.0 M decisions, 174 M propagations across 1047 SAT solve calls. M0.4 regression rerun confirms instrumentation is byte-equivalent (174/174 still match).
+
+Next action: M0.6 (LITERATURE.md primary references and PDFs filed).
 
 **29 April 2026 (evening).** M0.1–M0.4 closed in one session.
 

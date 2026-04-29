@@ -1,5 +1,6 @@
 #include <iostream>
 #include <cstdint>
+#include <chrono>
 #include <fstream>
 #include <filesystem>
 
@@ -27,6 +28,16 @@ static const char *outname = nullptr;
 static ofstream ofs;
 static ostream *out;
 
+// M0.5 instrumentation: optional per-shape stats stream. If -stats <file>
+// is given, computeHeesch emits one JSON object per shape it actually
+// processed (skipping HOLE shapes and the early-exit update_only branch),
+// in the same order as the main output. Records contain the shape size,
+// the resulting Hc/Hh, the wall-clock time of the solve(), and the
+// SAT-solver counters accumulated by HeeschSolver::runAndAccount.
+static const char *stats_name = nullptr;
+static ofstream stats_ofs;
+static ostream *stats_out = nullptr;
+
 template<typename grid>
 static bool computeHeesch(TileInfo<grid>& info)
 {
@@ -50,8 +61,28 @@ static bool computeHeesch(TileInfo<grid>& info)
 	solver.setCheckIsohedral(check_isohedral);
 	solver.setCheckPeriodic(check_periodic);
 	solver.setCheckHoleCoronas(check_hh);
+
+	auto t0 = std::chrono::steady_clock::now();
 	solver.solve(show_solution, max_level, info);
+	auto wall_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
+		std::chrono::steady_clock::now() - t0).count();
+
 	info.write(*out);
+
+	if (stats_out) {
+		// One JSON object per processed shape, in main-output order.
+		// Schema is documented in benchmarks/baseline/README.md.
+		*stats_out
+			<< "{\"grid\":\"" << gridTypeAbbreviation(grid::grid_type) << "\""
+			<< ",\"n\":" << info.getShape().size()
+			<< ",\"levels\":" << solver.getLevel()
+			<< ",\"wall_ns\":" << wall_ns
+			<< ",\"sat_calls\":" << solver.getNumSatCalls()
+			<< ",\"sat_conflicts\":" << solver.getCumConflicts()
+			<< ",\"sat_decisions\":" << solver.getCumDecisions()
+			<< ",\"sat_propagations\":" << solver.getCumPropagations()
+			<< "}\n";
+	}
 
 	return true;
 }
@@ -148,6 +179,9 @@ int main( int argc, char **argv )
 		} else if (!strcmp(argv[idx], "-o")) {
 			++idx;
 			outname = argv[idx];
+		} else if (!strcmp(argv[idx], "-stats")) {
+			++idx;
+			stats_name = argv[idx];
 		} else if (!strcmp(argv[idx], "-maxlevel")) {
 		    ++idx;
 		    max_level = atoi(argv[idx]);
@@ -196,6 +230,11 @@ int main( int argc, char **argv )
 		out = &cout;
 	}
 
+	if (stats_name) {
+		stats_ofs.open(stats_name);
+		stats_out = &stats_ofs;
+	}
+
 	if (inname) {
 		ifstream ifs(inname);
 		if (failsafe) {
@@ -214,6 +253,11 @@ int main( int argc, char **argv )
 	if (ofs.is_open()) {
 		ofs.flush();
 		ofs.close();
+	}
+
+	if (stats_ofs.is_open()) {
+		stats_ofs.flush();
+		stats_ofs.close();
 	}
 
 	return 0;

@@ -57,6 +57,32 @@ vendor import.
   `<iterator>`, `<set>`. libc++ pulls `<map>` in transitively from one of
   those; libstdc++ does not. Added an explicit `#include <map>`.
 
+### heesch-forge additions (M0.5 instrumentation)
+
+These are not bug fixes; they are new functionality bolted onto upstream so
+Phase-1 speedup claims have something to be measured against. If a future
+upstream sync is attempted, these need to be re-applied (or replaced if
+upstream adds its own stats hooks).
+
+- **`HeeschSolver` stats counters and `runAndAccount` helper.**
+  `src/sat/src/heesch.h` gains four `uint64_t` members
+  (`cum_conflicts_`, `cum_decisions_`, `cum_propagations_`, `num_sat_calls_`)
+  and a private `runAndAccount(CMSat::SATSolver&)` method that calls
+  `s.solve()` and adds CMS's per-call counters
+  (`get_last_conflicts/decisions/propagations`) into the cumulative members.
+  Every `solve()` site reachable from `HeeschSolver::solve()` — five sites
+  in total, in `solve()` itself, in `iterateUntilSimplyConnected`, and in
+  `checkIsohedralTiling` — was rewritten to call `runAndAccount` instead of
+  bare `solve()`. Public getters expose the counters for instrumentation.
+  The failsafe / `-old` path (`hasCorona`, `allCoronas`) is **not**
+  instrumented; baseline runs use the default path.
+- **`-stats <file>` CLI flag in `src/sat/src/sat.cpp`.** When set,
+  `computeHeesch` wraps `HeeschSolver::solve` in a
+  `std::chrono::steady_clock` timer and emits one JSON object per shape to
+  the named file. Schema is documented in `benchmarks/baseline/README.md`.
+  Without the flag, sat behaviour is byte-identical to the M0.3 build —
+  the M0.4 regression confirms this on every commit that touches `src/sat/`.
+
 ## Build dependencies (upstream targets `gen sat viz surrounds report`)
 
 - C++20 compiler (g++ ≥ 10 or clang++ ≥ 13). Upstream Makefile says C++17

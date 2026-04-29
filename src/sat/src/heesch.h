@@ -210,6 +210,16 @@ public:
 	void debug( std::ostream& os ) const;
 	void debugCurrentPatch( patch_t& soln ) const;
 
+	// M0.5 instrumentation: aggregate SAT-solver stats accumulated across
+	// every CMSat::SATSolver::solve() call made during the most recent
+	// solve(). Counters are zeroed at construction and never reset, so
+	// repeated calls accumulate; a HeeschSolver is constructed fresh per
+	// shape (sat.cpp:computeHeesch) so per-shape readout is clean.
+	uint64_t getCumConflicts() const { return cum_conflicts_; }
+	uint64_t getCumDecisions() const { return cum_decisions_; }
+	uint64_t getCumPropagations() const { return cum_propagations_; }
+	uint64_t getNumSatCalls() const { return num_sat_calls_; }
+
 private:
 	var_id declareVariable();
 	tile_index getTile( const xform_t& T ) const;
@@ -248,6 +258,24 @@ private:
 	bool check_hh_;
 	bool tiles_isohedrally_;
 	bool reduce_;
+
+	uint64_t cum_conflicts_;
+	uint64_t cum_decisions_;
+	uint64_t cum_propagations_;
+	uint64_t num_sat_calls_;
+
+	// Run a SAT solve and accumulate its per-call counter deltas into
+	// the cum_* members. Use this in place of bare s.solve() at every
+	// site reachable from HeeschSolver::solve().
+	CMSat::lbool runAndAccount( CMSat::SATSolver& s )
+	{
+		auto r = s.solve();
+		cum_conflicts_    += s.get_last_conflicts();
+		cum_decisions_    += s.get_last_decisions();
+		cum_propagations_ += s.get_last_propagations();
+		++num_sat_calls_;
+		return r;
+	}
 };
 
 template<typename grid, typename coord>
@@ -309,6 +337,10 @@ HeeschSolver<grid>::HeeschSolver( const Shape<grid>& shape, Orientations ori, bo
 	, check_hh_ { false }
 	, tiles_isohedrally_ { false }
 	, reduce_ {reduce}
+	, cum_conflicts_ { 0 }
+	, cum_decisions_ { 0 }
+	, cum_propagations_ { 0 }
+	, num_sat_calls_ { 0 }
 {
 	// Create the 0th corona.
 	getShapeVariable( grid::orientations[0], 0 );
@@ -828,7 +860,7 @@ bool HeeschSolver<grid>::iterateUntilSimplyConnected(
 	}
 
 	// Now iterate, as long as solutions are found.
-	while (solver.solve() == CMSat::l_True) {
+	while (runAndAccount(solver) == CMSat::l_True) {
 		// This solution may or may not have holes.  If it has holes, 
 		// ban them and continue.  If it doesn't have holes, report
 		// success.
@@ -914,7 +946,7 @@ void HeeschSolver<grid>::solve(
 			CMSat::SATSolver final_solver;
 			final_solver.new_vars(next_var_);
 			getClauses(final_solver, true);
-			if (final_solver.solve() == CMSat::l_True) {
+			if (runAndAccount(final_solver) == CMSat::l_True) {
 				if (get_solution) {
 					patch_t hh_solution;
 					getSolution(final_solver, hh_solution, 1);
@@ -946,7 +978,7 @@ void HeeschSolver<grid>::solve(
 		cur_solver->new_vars(next_var_);
 		getClauses(*cur_solver, true);
 
-		if (cur_solver->solve() != CMSat::l_True) {
+		if (runAndAccount(*cur_solver) != CMSat::l_True) {
 			// We've hit the limit, so hard stop here.
 
 			if (check_hh_ && reduce_) {
@@ -958,7 +990,7 @@ void HeeschSolver<grid>::solve(
 				CMSat::SATSolver final_solver;
 				final_solver.new_vars(next_var_);
 				getClauses(final_solver, true);
-				if (final_solver.solve() == CMSat::l_True) {
+				if (runAndAccount(final_solver) == CMSat::l_True) {
 					got_hh = true;
 					hh = level_;
 					if (get_solution) {
@@ -1192,7 +1224,7 @@ bool HeeschSolver<grid>::checkIsohedralTiling( CMSat::SATSolver& solv )
 		}
 	}
 
-	if (solv.solve() == CMSat::l_True) {
+	if (runAndAccount(solv) == CMSat::l_True) {
 		tiles_isohedrally_ = true;
 	}
 

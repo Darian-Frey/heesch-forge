@@ -96,6 +96,7 @@ core.*
 
 # Per-regression sat I/O scratch (committed run logs live in results/).
 benchmarks/kaplan/work/
+benchmarks/baseline/work/
 
 # Cairo-generated viz PDFs from ad-hoc runs (committed ones live under data/results/)
 src/sat/*.pdf

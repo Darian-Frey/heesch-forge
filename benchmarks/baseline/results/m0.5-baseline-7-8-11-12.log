@@ -1,0 +1,22 @@
+# heesch-forge M0.5 baseline (Kaplan-2022 polyominoes)
+# sat:   /home/azathoth/heesch-forge/src/sat/src/sat
+# data:  /home/azathoth/heesch-forge/data/kaplan-2022/omino
+# sizes: [7, 8, 11, 12]
+# out:   /home/azathoth/heesch-forge/benchmarks/baseline/results/m0.5-baseline.jsonl
+
+-- 07omino_0up.txt --
+  07omino_0up.txt           shapes=    3  ok=    3  err=  0  wall_total=   0.32s  p50= 140.91 ms  p95=   0.00 us  pmax= 176.67 ms  conflicts=      2222  decisions=     10685
+-- 08omino_0up.txt --
+  08omino_0up.txt           shapes=   20  ok=   20  err=  0  wall_total=   2.51s  p50=  58.33 ms  p95= 925.23 ms  pmax= 956.61 ms  conflicts=     11024  decisions=     53503
+-- 11omino_2up.txt --
+  11omino_2up.txt           shapes=  110  ok=  110  err=  0  wall_total= 194.83s  p50=   1.72 s  p95=   3.39 s  pmax=   3.87 s  conflicts=    507119  decisions=   3177449
+-- 12omino_2up.txt --
+  12omino_2up.txt           shapes=   41  ok=   41  err=  0  wall_total=  58.57s  p50=   1.16 s  p95=   3.75 s  pmax=   4.53 s  conflicts=     91771  decisions=    768363
+
+# overall: shapes=174 ok=174 err=0
+# wall_total = 256.23 s (across 174 shapes)
+# per-shape wall: p50=   1.42 s  p95=   3.53 s  pmax=   4.53 s
+# total SAT conflicts:           612,136
+# total SAT decisions:         4,010,000
+# total SAT propagations:    174,222,093
+# total SAT solve calls:           1,047
