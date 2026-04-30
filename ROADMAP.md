@@ -10,12 +10,12 @@ This document tracks phases, gates, and current status. The proposal in `PROPOSA
 
 ## Phase status overview
 
-*Updated 2026-05-01: Phase 1 active (M1.1, M1.2a, M1.3 closed; M1.2 / M1.4 / M1.5 / M1.6 / M1.7 outstanding).*
+*Updated 2026-05-01: Phase 1 active (M1.1, M1.2a, M1.3, M1.4 closed; M1.2 / M1.5 / M1.6 / M1.7 outstanding).*
 
 | Phase | Layers | Status | Target completion |
 |-------|--------|--------|-------------------|
 | 0 — Setup | — | ✅ done (6/6) | met |
-| 1 — Engineering | L1 | 🟢 active (3/7; M1.3 negative result) | +8 weeks |
+| 1 — Engineering | L1 | 🟢 active (4/7; M1.3 negative, M1.4 N/A) | +8 weeks |
 | 2 — Hybrid solver | L2 | ⚪ not started | +16 weeks |
 | 3 — Lateral grids | L4 | ⚪ not started | parallel from Phase 2 |
 | 4 — RL pilot | L3 | ⚪ not started | +28 weeks |
@@ -55,7 +55,7 @@ Legend: ✅ done · 🟢 active · 🟡 in progress · ⚪ not started · 🔴 b
 - [ ] M1.2 — Portfolio harness (CaDiCaL + Kissat + Glucose) with first-to-finish termination. **In progress: M1.2a (Kissat backend) closed; Glucose + portfolio harness pending.**
   - [x] M1.2a — Kissat backend wired in via `src/sat/src/kissat_backend.h` and a `-DHEESCH_BACKEND_KISSAT` build (`sat-kissat`). M0.4 regression: 64/64 match on sizes 7, 8, 12. Performance vs CMSat (same subset, 64 shapes): **7.33× slower at total wall**, p95 32 s vs CMSat's 3.6 s. n = 11 batch skipped because Kissat's non-incremental design forces full clause-rebuilds in `iterateUntilSimplyConnected`'s `while-solve-then-add-clauses` loop, pushing per-shape cost above the 5-min ceiling. Three-way write-up at `benchmarks/baseline/results/m1.2a-comparison.md`. Headline architectural finding: none of the three modern CDCL competitors (CaDiCaL, Kissat, soon Glucose) beats CryptoMiniSat on this workload, so the M1.2 portfolio must *include* CMSat rather than replace it. PROPOSAL §5's "replace single-solver SAT call with a portfolio" wording needs to be read as *augment*, not *replace*.
 - [x] M1.3 — BreakID empirical probe; documented **negative result**. A new `-DHEESCH_BACKEND_DUMP` build (`sat-dump`, see `src/sat/src/dumping_backend.h`) tees every SAT instance heesch-sat issues to a DIMACS file. Running BreakID 3.1 over those dumps and A/B-testing CMSat raw-vs-broken showed two clean regimes: (a) fresh corona-loop / iso-solver formulas accept 16-19 BreakID-derived breaking clauses in <0.2 s but solve in **identical** conflicts and decisions on CMSat (CryptoMiniSat's inprocessing already discovers the same equivalences); (b) walkback / `iterateUntilSimplyConnected` formulas (~750k–800k clauses on n = 8) **time out** at 60 s with zero symmetries detected — the appended hole-banning clauses break every variable-level automorphism. Naive "preprocess every CNF" pipeline would add ≥120 s/shape for zero solver-side gain. Full write-up at `benchmarks/breakid/README.md`; reproducible probe at `benchmarks/breakid/probe/run_probe.sh`. Phase-1 implication: BreakID cannot meet the ≥5× target with CMSat as the engine; M1.4 (encoding sweep) and M1.5 (MaxSAT) remain the only Phase-1 levers not yet ruled out.
-- [ ] M1.4 — PBLib AMO encoding sweep; record per-corona-depth optimum.
+- [x] M1.4 — Closed as **structurally not applicable**. PBLib's value is sweeping the *encoding choice* of N-way at-most-one constraints (sequential / commander / product / bimander / ladder). Inspecting `src/sat/src/heesch.h::getClauses` shows heesch-sat does not emit N-way AMOs at all — every "at most one" enforcement is expressed as **pairwise binary mutex over ordered tile-pairs**, of which the dominant block is the geometric-overlap mutex (`heesch.h:615-635`) that walks ordered pairs of overlapping tile positions and emits one binary clause per `(level_i, level_j)` combination, costing `O(|overlap_pairs| × |levels|²)`. There is no `vector<Lit>` AMO site to swap an encoding behind. To make M1.4 meaningful would require *refactoring* the constraint generation so that the per-cell "at most one tile uses cell c" is expressed as a true N-way AMO over the (tile, level) variables covering c — not a sweep but an encoding redesign. That refactor naturally belongs under M2 (hybrid DLX/SAT handoff is already rethinking the constraint structure), not M1. Phase-1 implication: the only Phase-1 lever still unevaluated is M1.5 (MaxSAT).
 - [ ] M1.5 — MaxSAT path: drop in RC2 / EvalMaxSAT; expose partial-corona score.
 - [ ] M1.6 — Structured logging: JSON per-shape per-corona records.
 - [ ] M1.7 — Benchmark report v1: speedup factor, MaxSAT score distribution, sensitivity to encoding choice.
@@ -200,6 +200,8 @@ When a planned file is created, move its row from this table into the "Live now"
 ---
 
 ## Status notes (latest first)
+
+**1 May 2026 (later).** M1.4 closed as **structurally not applicable**. PBLib's value is sweeping the encoding choice of N-way at-most-one constraints, but `src/sat/src/heesch.h::getClauses` does not emit any N-way AMOs — every "at most one" enforcement is pairwise binary mutex over ordered tile-pairs (the dominant block being `heesch.h:615-635`'s geometric-overlap mutex, costing `O(|overlap_pairs| × |levels|²)` binary clauses). To make M1.4 meaningful would require a constraint-generation refactor that groups (tile, level) variables by the cell each covers and emits a single PBLib AMO call per cell — that is not a sweep but an encoding redesign, and it overlaps in scope with M2's hybrid DLX/SAT handoff which is already rethinking constraint structure. Recording the finding here keeps M1.4 honest; the work belongs under M2. The only remaining Phase-1 lever still unevaluated is M1.5 (MaxSAT partial-corona score, the Layer-3 reward signal).
 
 **1 May 2026.** M1.3 closed as a documented **negative result**.
 
