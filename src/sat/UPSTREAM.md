@@ -163,6 +163,30 @@ upstream adds its own stats hooks).
   per-call CNFs (encoding sweeps under M1.4, hybrid handoff under
   M2.3, etc.).
 
+### heesch-forge additions (M1.5 WCNF dumping backend)
+
+- **`wcnf_dumping_backend.h`.** Same overall pattern as the M1.3
+  dumping backend: wraps a real `CMSat::SATSolver`, intercepts every
+  `add_clause`, runs the inner solve, and on UNSAT writes a
+  classic-format DIMACS WCNF to `$HEESCH_DUMP_DIR`. The new piece is
+  `add_soft_cell_var(uint32_t)`: under
+  `#ifdef HEESCH_BACKEND_WCNF_DUMP`, `HeeschSolver::getClauses` calls
+  it for each cell-var, and the backend records those vars to emit
+  as unit soft clauses with weight 1 in the WCNF. Selected via
+  `-DHEESCH_BACKEND_WCNF_DUMP`, producing the `sat-wcnf-dump`
+  binary.
+- **Why only on UNSAT.** Complete-corona SAT calls are not
+  interesting for partial-corona scoring (the full corona exists,
+  score is trivially the total cell count). UNSAT is exactly when
+  "how close did we come?" is the meaningful question and where
+  MaxSAT's optimal cost differs from zero.
+- **Used by the M1.5 RC2 probe.** Documented at
+  `benchmarks/maxsat/README.md`. Empirical finding (negative):
+  every probed WCNF returns UNSAT-HARD from RC2, confirming that
+  the heesch-sat encoding hardcodes corona-completion in the hard
+  portion. Real partial-corona scoring requires an encoding
+  redesign that belongs under M2 rather than M1.
+
 ## Build dependencies (upstream targets `gen sat viz surrounds report`)
 
 - C++20 compiler (g++ ≥ 10 or clang++ ≥ 13). Upstream Makefile says C++17

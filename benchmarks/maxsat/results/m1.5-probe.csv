@@ -1,0 +1,7 @@
+shape,instance,nvars,nhard,nsoft,cost,score,wall_s,timeout,unsat_hard
+n07-omino-1,inst-00001-call000.wcnf,172,2491,107,,,0.0007492779996027821,False,True
+n07-omino-1,inst-00002-call000.wcnf,1885,268323,342,,,0.08826512300038303,False,True
+n07-omino-1,inst-00003-call000.wcnf,2318,390701,355,,,0.110073994999766,False,True
+n08-omino-1,inst-00001-call000.wcnf,335,10605,178,,,0.00415324799996597,False,True
+n08-omino-1,inst-00002-call000.wcnf,3510,749355,581,,,2.131078578000597,False,True
+n08-omino-1,inst-00003-call000.wcnf,3617,790601,581,,,20.0161974800003,False,True

@@ -1,0 +1,18 @@
+# heesch-forge M1.5 MaxSAT partial-corona probe
+# date: 2026-04-30T21:22:52Z
+# host: Linux 6.17.0-22-generic x86_64
+
+==== n07-omino-1 : 1 0 1 1 0 2 1 2 1 3 2 3 3 3 ====
+# 3 wcnf file(s) under /tmp/maxsat-probe-9r3YaZ
+# per-file cap: 60.0s; output: /tmp/maxsat-probe-9r3YaZ/scores.csv
+
+  inst-00001-call000.wcnf               vars=  172 hard=  2491 soft= 107  score= None  cost= None  wall=  0.00s  UNSAT-HARD
+  inst-00002-call000.wcnf               vars= 1885 hard=268323 soft= 342  score= None  cost= None  wall=  0.09s  UNSAT-HARD
+  inst-00003-call000.wcnf               vars= 2318 hard=390701 soft= 355  score= None  cost= None  wall=  0.11s  UNSAT-HARD
+==== n08-omino-1 : 0 0 1 0 5 0 1 1 2 1 3 1 4 1 5 1 ====
+# 3 wcnf file(s) under /tmp/maxsat-probe-4S1MS7
+# per-file cap: 60.0s; output: /tmp/maxsat-probe-4S1MS7/scores.csv
+
+  inst-00001-call000.wcnf               vars=  335 hard= 10605 soft= 178  score= None  cost= None  wall=  0.00s  UNSAT-HARD
+  inst-00002-call000.wcnf               vars= 3510 hard=749355 soft= 581  score= None  cost= None  wall=  2.13s  UNSAT-HARD
+  inst-00003-call000.wcnf               vars= 3617 hard=790601 soft= 581  score= None  cost= None  wall= 20.02s  UNSAT-HARD

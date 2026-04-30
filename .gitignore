@@ -31,6 +31,7 @@ src/sat/src/sat
 src/sat/src/sat-cadical
 src/sat/src/sat-dump
 src/sat/src/sat-kissat
+src/sat/src/sat-wcnf-dump
 src/sat/src/viz
 
 # M1.3 probe helper compiled out of line; source is committed at

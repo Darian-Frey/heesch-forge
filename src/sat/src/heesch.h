@@ -28,6 +28,9 @@ using SATSolverImpl = kissat_backend::KissatSolver;
 #elif defined(HEESCH_BACKEND_DUMP)
 #include "dumping_backend.h"
 using SATSolverImpl = dumping_backend::DumpingSolver;
+#elif defined(HEESCH_BACKEND_WCNF_DUMP)
+#include "wcnf_dumping_backend.h"
+using SATSolverImpl = wcnf_dumping_backend::WcnfDumpingSolver;
 #else
 using SATSolverImpl = CMSat::SATSolver;
 #endif
@@ -567,6 +570,15 @@ void HeeschSolver<grid>::getClauses(
 
 	cl.push_back(pos(tiles_[0][0]));
 	solv.add_clause( cl );
+
+#ifdef HEESCH_BACKEND_WCNF_DUMP
+	// M1.5: tell the WCNF backend which vars are cell-vars so it can emit
+	// them as soft unit clauses. Other backends do not have this method;
+	// the #ifdef keeps them unaffected.
+	for ( const auto& ci : cells_ ) {
+		solv.add_soft_cell_var( ci.var_ );
+	}
+#endif
 
 	// If a copy of S is used, then its cells are used.
 	cl.resize(2);

@@ -24,11 +24,12 @@ DEPENDS = ${OBJECTS:.o=.d}
 # CMSat default build is unaffected. All variants still link
 # libcryptominisat5 because CMSat::Lit / CMSat::lbool stay as the project-
 # wide literal types.
-CADICAL_OBJECTS = sat-cadical.o isohedral.o
-KISSAT_OBJECTS  = sat-kissat.o isohedral.o
-DUMP_OBJECTS    = sat-dump.o isohedral.o
+CADICAL_OBJECTS   = sat-cadical.o isohedral.o
+KISSAT_OBJECTS    = sat-kissat.o isohedral.o
+DUMP_OBJECTS      = sat-dump.o isohedral.o
+WCNF_DUMP_OBJECTS = sat-wcnf-dump.o isohedral.o
 
-all: sat viz gen surrounds report sat-cadical sat-kissat sat-dump
+all: sat viz gen surrounds report sat-cadical sat-kissat sat-dump sat-wcnf-dump
 
 # Link order matters with GNU ld: object files before libraries.
 sat: sat.o isohedral.o
@@ -52,6 +53,12 @@ sat-dump.o: sat.cpp
 sat-dump: $(DUMP_OBJECTS)
 	$(CXX) -o sat-dump $(DUMP_OBJECTS) $(LIBS)
 
+sat-wcnf-dump.o: sat.cpp
+	$(CXX) $(CXXFLAGS) -DHEESCH_BACKEND_WCNF_DUMP -c -o sat-wcnf-dump.o sat.cpp
+
+sat-wcnf-dump: $(WCNF_DUMP_OBJECTS)
+	$(CXX) -o sat-wcnf-dump $(WCNF_DUMP_OBJECTS) $(LIBS)
+
 viz: viz.o
 	$(CXX) -o viz viz.o $(LIBS) $(VIZ_LIBS)
 
@@ -74,5 +81,6 @@ report: report.o
 clean:
 	rm -f ${OBJECTS} ${DEPENDS} \
 	      sat-cadical.o sat-cadical.d sat-kissat.o sat-kissat.d \
-	      sat-dump.o sat-dump.d \
-	      sat viz gen surrounds report sat-cadical sat-kissat sat-dump
+	      sat-dump.o sat-dump.d sat-wcnf-dump.o sat-wcnf-dump.d \
+	      sat viz gen surrounds report \
+	      sat-cadical sat-kissat sat-dump sat-wcnf-dump
