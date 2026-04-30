@@ -19,14 +19,15 @@ VIZ_LIBS = $(shell pkg-config --libs cairo)
 OBJECTS = sat.o viz.o surrounds.o gen.o report.o isohedral.o
 DEPENDS = ${OBJECTS:.o=.d}
 
-# M1.1: a CaDiCaL-backed sat binary (sat-cadical) is built from the same
-# sources with -DHEESCH_BACKEND_CADICAL. The `sat-cadical.o` rule below
-# compiles sat.cpp with the macro; the link line adds -lcadical. Both
-# binaries still link libcryptominisat5 because CMSat::Lit / CMSat::lbool
-# remain the project-wide literal types.
+# M1.1 / M1.2a: extra backend-specific binaries built from the same sources
+# with a -DHEESCH_BACKEND_* macro. Each variant gets its own .o so the
+# CMSat default build is unaffected. All variants still link
+# libcryptominisat5 because CMSat::Lit / CMSat::lbool stay as the project-
+# wide literal types.
 CADICAL_OBJECTS = sat-cadical.o isohedral.o
+KISSAT_OBJECTS  = sat-kissat.o isohedral.o
 
-all: sat viz gen surrounds report sat-cadical
+all: sat viz gen surrounds report sat-cadical sat-kissat
 
 # Link order matters with GNU ld: object files before libraries.
 sat: sat.o isohedral.o
@@ -37,6 +38,12 @@ sat-cadical.o: sat.cpp
 
 sat-cadical: $(CADICAL_OBJECTS)
 	$(CXX) -o sat-cadical $(CADICAL_OBJECTS) $(LIBS) -lcadical
+
+sat-kissat.o: sat.cpp
+	$(CXX) $(CXXFLAGS) -DHEESCH_BACKEND_KISSAT -c -o sat-kissat.o sat.cpp
+
+sat-kissat: $(KISSAT_OBJECTS)
+	$(CXX) -o sat-kissat $(KISSAT_OBJECTS) $(LIBS) -lkissat -lm
 
 viz: viz.o
 	$(CXX) -o viz viz.o $(LIBS) $(VIZ_LIBS)
@@ -58,5 +65,6 @@ report: report.o
 .PHONY: clean
 
 clean:
-	rm -f ${OBJECTS} ${DEPENDS} sat-cadical.o sat-cadical.d \
-	      sat viz gen surrounds report sat-cadical
+	rm -f ${OBJECTS} ${DEPENDS} \
+	      sat-cadical.o sat-cadical.d sat-kissat.o sat-kissat.d \
+	      sat viz gen surrounds report sat-cadical sat-kissat

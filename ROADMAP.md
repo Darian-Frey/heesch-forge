@@ -10,7 +10,7 @@ This document tracks phases, gates, and current status. The proposal in `PROPOSA
 
 ## Phase status overview
 
-*Updated 2026-04-30: Phase 0 closed; Phase 1 active (M1.1 done, 1/7).*
+*Updated 2026-04-30: Phase 0 closed; Phase 1 active (M1.1 + M1.2a done; M1.2 in progress).*
 
 | Phase | Layers | Status | Target completion |
 |-------|--------|--------|-------------------|
@@ -52,7 +52,8 @@ Legend: ✅ done · 🟢 active · 🟡 in progress · ⚪ not started · 🔴 b
 ### Milestones
 
 - [x] M1.1 — CaDiCaL backend lives alongside CryptoMiniSat behind a single `SATSolverImpl` typedef in `src/sat/src/heesch.h`, selected at compile time by `-DHEESCH_BACKEND_CADICAL`; the Makefile builds both `sat` (CMSat) and `sat-cadical` (CaDiCaL). M0.4 regression: 174/174 shapes match for both backends. Performance against the M0.5 baseline (n ∈ {7, 8, 11, 12}, 174 shapes): CaDiCaL 569.2 s vs CMSat 256.2 s — **2.22× slower at total wall, 3.0× at p95, 3.3× at max**, with `sat_calls` count preserved (1046 vs 1047). Side-by-side at `benchmarks/baseline/results/m1.1-comparison.md`. Single-solver swap is not the Phase-1 win; M1.2 (portfolio first-to-finish + clause sharing) and M1.3 (BreakID symmetry breaking) need to deliver the headline speedup.
-- [ ] M1.2 — Portfolio harness (CaDiCaL + Kissat + Glucose) with first-to-finish termination.
+- [ ] M1.2 — Portfolio harness (CaDiCaL + Kissat + Glucose) with first-to-finish termination. **In progress: M1.2a (Kissat backend) closed; Glucose + portfolio harness pending.**
+  - [x] M1.2a — Kissat backend wired in via `src/sat/src/kissat_backend.h` and a `-DHEESCH_BACKEND_KISSAT` build (`sat-kissat`). M0.4 regression: 64/64 match on sizes 7, 8, 12. Performance vs CMSat (same subset, 64 shapes): **7.33× slower at total wall**, p95 32 s vs CMSat's 3.6 s. n = 11 batch skipped because Kissat's non-incremental design forces full clause-rebuilds in `iterateUntilSimplyConnected`'s `while-solve-then-add-clauses` loop, pushing per-shape cost above the 5-min ceiling. Three-way write-up at `benchmarks/baseline/results/m1.2a-comparison.md`. Headline architectural finding: none of the three modern CDCL competitors (CaDiCaL, Kissat, soon Glucose) beats CryptoMiniSat on this workload, so the M1.2 portfolio must *include* CMSat rather than replace it. PROPOSAL §5's "replace single-solver SAT call with a portfolio" wording needs to be read as *augment*, not *replace*.
 - [ ] M1.3 — BreakID integration; per-shape comparison with/without symmetry breaking.
 - [ ] M1.4 — PBLib AMO encoding sweep; record per-corona-depth optimum.
 - [ ] M1.5 — MaxSAT path: drop in RC2 / EvalMaxSAT; expose partial-corona score.
@@ -199,6 +200,12 @@ When a planned file is created, move its row from this table into the "Live now"
 ---
 
 ## Status notes (latest first)
+
+**30 April 2026 (later).** M1.2a closed; M1.2 still open (Glucose backend + portfolio harness pending).
+
+- M1.2a: third compile-time backend wired in via `src/sat/src/kissat_backend.h` (Kissat's C API, `quiet`-mode init), produces `sat-kissat`. Three-way regression / baseline pass on n ∈ {7, 8, 12} (64 shapes, 64/64 match every backend); the n = 11 batch was attempted at first but pulled after one shape ran past 14 minutes — Kissat's non-incremental design forces a full clause-rebuild on every `solve()` call inside `iterateUntilSimplyConnected`'s `while-solve-then-add-clauses` loop, and the n = 11 walkback compounds that into infeasibility on this hardware.
+- Performance on the common n ∈ {7, 8, 12} subset (64 shapes): CMSat 61.4 s, CaDiCaL 119.6 s, Kissat 450.3 s. Kissat is **7.33× slower than CMSat at total wall**, p95 32 s vs CMSat's 3.6 s. `sat_calls` matches across all three (336–337) — same algorithm, the gap is purely solver behaviour. Three-way write-up at `benchmarks/baseline/results/m1.2a-comparison.md`.
+- Phase-1 architectural finding (load-bearing): **none of the three modern CDCL competitors beats CryptoMiniSat on this workload.** PROPOSAL §5's "replace single-solver SAT call with a portfolio" wording must be read as *augment*, not *replace* — a first-to-finish portfolio of CaDiCaL + Kissat ± Glucose with CMSat *excluded* would be strictly slower than CMSat solo. Concrete consequence for M1.2b: the portfolio MUST include CryptoMiniSat. Concrete consequence for Phase 1 overall: the ≥5× speedup target is not reachable by solver swap; M1.3 (BreakID symmetry breaking, orthogonal to solver) and M1.4 (encoding sweep) have to do the lifting.
 
 **30 April 2026.** M1.1 closed; Phase 1 opened.
 

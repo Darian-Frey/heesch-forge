@@ -109,6 +109,40 @@ upstream adds its own stats hooks).
   and `sat_calls` counters still work. If a future CaDiCaL release adds
   the accessors, only `cadical_backend.h` changes.
 
+### heesch-forge additions (M1.2a Kissat backend)
+
+- **`kissat_backend.h` adapter.** Same pattern as `cadical_backend.h`:
+  presents the CMSat::SATSolver subset HeeschSolver uses, lets
+  `-DHEESCH_BACKEND_KISSAT` switch the typedef in `heesch.h`. Wraps
+  Kissat's C API (`kissat_init` / `kissat_add` / `kissat_solve` /
+  `kissat_value` / `kissat_release`) and translates between
+  CMSat::Lit/lbool and Kissat's DIMACS-int form. Sets
+  `kissat_set_option(s, "quiet", 1)` to suppress Kissat's stderr
+  chatter so JSONL log capture stays clean.
+- **Non-incremental constraint.** Kissat does not support adding
+  clauses after `kissat_solve()` returns. `HeeschSolver::iterate-
+  UntilSimplyConnected` adds clauses inside a `while (solver.solve()
+  == l_True)` loop, which would be undefined on a Kissat instance.
+  The adapter therefore buffers every `add_clause` in a local
+  `vector<vector<int>>` and rebuilds a fresh `kissat*` on every
+  `solve()` call — feeding **all** prior clauses each time. Cost is
+  O(num_clauses) per solve. For non-incremental call sites
+  (`cur_solver`, `iso_solver`, the two `final_solver`s) the rebuild
+  happens at most once per solver lifetime, so the overhead is
+  negligible. For the n = 11 walkback loop the cost compounds and
+  becomes infeasible (>14 min per shape observed); the M1.2a baseline
+  therefore restricts to sizes 7, 8, 12. Full architectural rationale
+  in `benchmarks/baseline/results/m1.2a-comparison.md`.
+- **Kissat stats gap.** Same as CaDiCaL: Kissat's public C API
+  (`kissat_print_statistics()` only) exposes no programmatic
+  per-solve counters. `sat-kissat` writes zeros into the
+  conflict / decision / propagation fields of the JSONL stats stream.
+- **Two-way movability.** `KissatSolver` deletes copy and defines
+  noexcept move so it can live in `std::vector` /
+  `std::unique_ptr` containers (`HeeschSolver::solve()` keeps a
+  `vector<unique_ptr<SATSolverImpl>> past_solvers` for walkback;
+  same lifetime model as CMSat / CaDiCaL).
+
 ## Build dependencies (upstream targets `gen sat viz surrounds report`)
 
 - C++20 compiler (g++ ≥ 10 or clang++ ≥ 13). Upstream Makefile says C++17

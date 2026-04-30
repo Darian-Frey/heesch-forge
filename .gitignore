@@ -29,6 +29,7 @@ Makefile.local
 src/sat/src/gen
 src/sat/src/sat
 src/sat/src/sat-cadical
+src/sat/src/sat-kissat
 src/sat/src/viz
 src/sat/src/surrounds
 src/sat/src/report

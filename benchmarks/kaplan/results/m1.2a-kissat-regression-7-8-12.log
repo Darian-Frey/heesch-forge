@@ -1,0 +1,14 @@
+# heesch-forge M0.4 regression vs Kaplan (2022)
+# sat binary: src/sat/src/sat-kissat
+# dataset:    /home/azathoth/heesch-forge/data/kaplan-2022/omino
+# sizes:      [7, 8, 12]
+# files:      3
+
+-- 07omino_0up.txt --
+  shapes=    3  match=    3  mismatch=  0  inconclusive=  0  isohedral=  0     0.90s  (3.3/s)
+-- 08omino_0up.txt --
+  shapes=   20  match=   20  mismatch=  0  inconclusive=  0  isohedral=  0     9.48s  (2.1/s)
+-- 12omino_2up.txt --
+  shapes=   41  match=   41  mismatch=  0  inconclusive=  0  isohedral=  0   441.30s  (0.1/s)
+
+# overall: match=64 mismatch=0 inconclusive=0 isohedral=0 fatal_files=0 wall=451.68s

@@ -14,14 +14,17 @@
 #include "boundary.h"
 #include "isohedral.h"
 
-// M1.1: pluggable SAT backend selected at compile time. The default (no
-// macro) keeps upstream's CryptoMiniSat backend; -DHEESCH_BACKEND_CADICAL
-// in the build switches to CaDiCaL via the adapter in cadical_backend.h.
-// CMSat::Lit / CMSat::lbool remain the project-wide literal and truth-value
-// types regardless of backend, so the rest of this file is backend-agnostic.
-#ifdef HEESCH_BACKEND_CADICAL
+// M1.1 / M1.2a: pluggable SAT backend selected at compile time. The default
+// (no macro) keeps upstream's CryptoMiniSat backend. -DHEESCH_BACKEND_CADICAL
+// switches to CaDiCaL; -DHEESCH_BACKEND_KISSAT switches to Kissat. CMSat::Lit
+// and CMSat::lbool remain the project-wide literal and truth-value types
+// regardless of backend, so the rest of this file is backend-agnostic.
+#if defined(HEESCH_BACKEND_CADICAL)
 #include "cadical_backend.h"
 using SATSolverImpl = cadical_backend::CadicalSolver;
+#elif defined(HEESCH_BACKEND_KISSAT)
+#include "kissat_backend.h"
+using SATSolverImpl = kissat_backend::KissatSolver;
 #else
 using SATSolverImpl = CMSat::SATSolver;
 #endif
