@@ -10,12 +10,12 @@ This document tracks phases, gates, and current status. The proposal in `PROPOSA
 
 ## Phase status overview
 
-*Updated 2026-04-30: Phase 0 closed; Phase 1 active (M1.1 + M1.2a done; M1.2 in progress).*
+*Updated 2026-05-01: Phase 1 active (M1.1, M1.2a, M1.3 closed; M1.2 / M1.4 / M1.5 / M1.6 / M1.7 outstanding).*
 
 | Phase | Layers | Status | Target completion |
 |-------|--------|--------|-------------------|
 | 0 — Setup | — | ✅ done (6/6) | met |
-| 1 — Engineering | L1 | 🟢 active (1/7) | +8 weeks |
+| 1 — Engineering | L1 | 🟢 active (3/7; M1.3 negative result) | +8 weeks |
 | 2 — Hybrid solver | L2 | ⚪ not started | +16 weeks |
 | 3 — Lateral grids | L4 | ⚪ not started | parallel from Phase 2 |
 | 4 — RL pilot | L3 | ⚪ not started | +28 weeks |
@@ -54,7 +54,7 @@ Legend: ✅ done · 🟢 active · 🟡 in progress · ⚪ not started · 🔴 b
 - [x] M1.1 — CaDiCaL backend lives alongside CryptoMiniSat behind a single `SATSolverImpl` typedef in `src/sat/src/heesch.h`, selected at compile time by `-DHEESCH_BACKEND_CADICAL`; the Makefile builds both `sat` (CMSat) and `sat-cadical` (CaDiCaL). M0.4 regression: 174/174 shapes match for both backends. Performance against the M0.5 baseline (n ∈ {7, 8, 11, 12}, 174 shapes): CaDiCaL 569.2 s vs CMSat 256.2 s — **2.22× slower at total wall, 3.0× at p95, 3.3× at max**, with `sat_calls` count preserved (1046 vs 1047). Side-by-side at `benchmarks/baseline/results/m1.1-comparison.md`. Single-solver swap is not the Phase-1 win; M1.2 (portfolio first-to-finish + clause sharing) and M1.3 (BreakID symmetry breaking) need to deliver the headline speedup.
 - [ ] M1.2 — Portfolio harness (CaDiCaL + Kissat + Glucose) with first-to-finish termination. **In progress: M1.2a (Kissat backend) closed; Glucose + portfolio harness pending.**
   - [x] M1.2a — Kissat backend wired in via `src/sat/src/kissat_backend.h` and a `-DHEESCH_BACKEND_KISSAT` build (`sat-kissat`). M0.4 regression: 64/64 match on sizes 7, 8, 12. Performance vs CMSat (same subset, 64 shapes): **7.33× slower at total wall**, p95 32 s vs CMSat's 3.6 s. n = 11 batch skipped because Kissat's non-incremental design forces full clause-rebuilds in `iterateUntilSimplyConnected`'s `while-solve-then-add-clauses` loop, pushing per-shape cost above the 5-min ceiling. Three-way write-up at `benchmarks/baseline/results/m1.2a-comparison.md`. Headline architectural finding: none of the three modern CDCL competitors (CaDiCaL, Kissat, soon Glucose) beats CryptoMiniSat on this workload, so the M1.2 portfolio must *include* CMSat rather than replace it. PROPOSAL §5's "replace single-solver SAT call with a portfolio" wording needs to be read as *augment*, not *replace*.
-- [ ] M1.3 — BreakID integration; per-shape comparison with/without symmetry breaking.
+- [x] M1.3 — BreakID empirical probe; documented **negative result**. A new `-DHEESCH_BACKEND_DUMP` build (`sat-dump`, see `src/sat/src/dumping_backend.h`) tees every SAT instance heesch-sat issues to a DIMACS file. Running BreakID 3.1 over those dumps and A/B-testing CMSat raw-vs-broken showed two clean regimes: (a) fresh corona-loop / iso-solver formulas accept 16-19 BreakID-derived breaking clauses in <0.2 s but solve in **identical** conflicts and decisions on CMSat (CryptoMiniSat's inprocessing already discovers the same equivalences); (b) walkback / `iterateUntilSimplyConnected` formulas (~750k–800k clauses on n = 8) **time out** at 60 s with zero symmetries detected — the appended hole-banning clauses break every variable-level automorphism. Naive "preprocess every CNF" pipeline would add ≥120 s/shape for zero solver-side gain. Full write-up at `benchmarks/breakid/README.md`; reproducible probe at `benchmarks/breakid/probe/run_probe.sh`. Phase-1 implication: BreakID cannot meet the ≥5× target with CMSat as the engine; M1.4 (encoding sweep) and M1.5 (MaxSAT) remain the only Phase-1 levers not yet ruled out.
 - [ ] M1.4 — PBLib AMO encoding sweep; record per-corona-depth optimum.
 - [ ] M1.5 — MaxSAT path: drop in RC2 / EvalMaxSAT; expose partial-corona score.
 - [ ] M1.6 — Structured logging: JSON per-shape per-corona records.
@@ -200,6 +200,15 @@ When a planned file is created, move its row from this table into the "Live now"
 ---
 
 ## Status notes (latest first)
+
+**1 May 2026.** M1.3 closed as a documented **negative result**.
+
+- Built `sat-dump` (a CMSat-backed `-DHEESCH_BACKEND_DUMP` build at `src/sat/src/dumping_backend.h`) that tees every SAT instance heesch-sat issues to DIMACS under `$HEESCH_DUMP_DIR`. Wrote a probe at `benchmarks/breakid/probe/run_probe.sh` that runs heesch-sat on a sample shape, runs `breakid` over each dumped CNF (60 s wall cap), and A/B-tests CMSat raw-vs-broken via a small `cms_solve` helper (source at `benchmarks/breakid/probe/cms_solve.cpp`).
+- Two regimes emerged cleanly across n = 7 and n = 8 samples (committed: `benchmarks/breakid/results/m1.3-probe.{log,csv}`):
+  - **Fresh corona-loop / iso-solver formulas** (1.7 k–10.6 k clauses): BreakID adds 16–19 symmetry-breaking clauses in <0.2 s. CMSat's solve trace is **byte-identical** raw vs broken — same conflict count, same decision count. CryptoMiniSat's own inprocessing already discovers the same equivalences.
+  - **Walkback / `iterateUntilSimplyConnected` formulas** (~750 k–800 k clauses on n = 8): BreakID **times out at 60 s** with zero symmetries detected. Run uncapped on the n = 7 walkback formulas it took 226 s and 753 s respectively, both reporting `Num generators: 0` — every variable-level automorphism is killed by the thousands of hole-banning clauses heesch-sat appends inside the walkback loop.
+- Phase-1 implication: a "preprocess every CNF with BreakID" pipeline costs ≥120 s/shape on n = 8 alone for zero solver-side gain. BreakID cannot meet the ≥5× target with CMSat as the engine. M1.4 (encoding sweep) and M1.5 (MaxSAT) remain the only Phase-1 levers not yet ruled out. The structural follow-up — refactoring `iterateUntilSimplyConnected` to one-shot SAT calls so each instance stays in a regime where symmetries survive — sits naturally under M2 (hybrid solver), not M1.
+- Full write-up at `benchmarks/breakid/README.md`. The dumping backend remains useful infrastructure for future probes (M1.4 encoding sweeps, M2.3 hybrid handoff).
 
 **30 April 2026 (later).** M1.2a closed; M1.2 still open (Glucose backend + portfolio harness pending).
 

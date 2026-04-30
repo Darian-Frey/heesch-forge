@@ -143,6 +143,26 @@ upstream adds its own stats hooks).
   `vector<unique_ptr<SATSolverImpl>> past_solvers` for walkback;
   same lifetime model as CMSat / CaDiCaL).
 
+### heesch-forge additions (M1.3 dumping backend)
+
+- **`dumping_backend.h`.** Wraps a real `CMSat::SATSolver`, intercepts
+  every `add_clause` to buffer DIMACS-int form, and on each `solve()`
+  writes the current CNF to a file under `$HEESCH_DUMP_DIR` before
+  forwarding to CMSat for the actual solve. Filenames embed an atomic
+  per-process instance id and a per-instance call counter so every
+  SAT call heesch-sat issues becomes one DIMACS file. Selected via
+  `-DHEESCH_BACKEND_DUMP`, producing the `sat-dump` binary. The
+  regression suite still passes against `sat-dump` because the
+  underlying CMSat solver is the one actually deciding satisfiability.
+- **Used only by the M1.3 BreakID probe.** Documented in
+  `benchmarks/breakid/README.md`. The probe exposed a clean
+  bimodal regime (fresh formulas: tiny gain, no Phase-1 lift;
+  walkback formulas: 60 s+ BreakID timeouts with no symmetries
+  found) that closed M1.3 as a negative result. The dumping backend
+  remains useful infrastructure for any future probe that wants
+  per-call CNFs (encoding sweeps under M1.4, hybrid handoff under
+  M2.3, etc.).
+
 ## Build dependencies (upstream targets `gen sat viz surrounds report`)
 
 - C++20 compiler (g++ ≥ 10 or clang++ ≥ 13). Upstream Makefile says C++17

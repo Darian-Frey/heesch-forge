@@ -26,8 +26,9 @@ DEPENDS = ${OBJECTS:.o=.d}
 # wide literal types.
 CADICAL_OBJECTS = sat-cadical.o isohedral.o
 KISSAT_OBJECTS  = sat-kissat.o isohedral.o
+DUMP_OBJECTS    = sat-dump.o isohedral.o
 
-all: sat viz gen surrounds report sat-cadical sat-kissat
+all: sat viz gen surrounds report sat-cadical sat-kissat sat-dump
 
 # Link order matters with GNU ld: object files before libraries.
 sat: sat.o isohedral.o
@@ -44,6 +45,12 @@ sat-kissat.o: sat.cpp
 
 sat-kissat: $(KISSAT_OBJECTS)
 	$(CXX) -o sat-kissat $(KISSAT_OBJECTS) $(LIBS) -lkissat -lm
+
+sat-dump.o: sat.cpp
+	$(CXX) $(CXXFLAGS) -DHEESCH_BACKEND_DUMP -c -o sat-dump.o sat.cpp
+
+sat-dump: $(DUMP_OBJECTS)
+	$(CXX) -o sat-dump $(DUMP_OBJECTS) $(LIBS)
 
 viz: viz.o
 	$(CXX) -o viz viz.o $(LIBS) $(VIZ_LIBS)
@@ -67,4 +74,5 @@ report: report.o
 clean:
 	rm -f ${OBJECTS} ${DEPENDS} \
 	      sat-cadical.o sat-cadical.d sat-kissat.o sat-kissat.d \
-	      sat viz gen surrounds report sat-cadical sat-kissat
+	      sat-dump.o sat-dump.d \
+	      sat viz gen surrounds report sat-cadical sat-kissat sat-dump

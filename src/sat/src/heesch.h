@@ -25,6 +25,9 @@ using SATSolverImpl = cadical_backend::CadicalSolver;
 #elif defined(HEESCH_BACKEND_KISSAT)
 #include "kissat_backend.h"
 using SATSolverImpl = kissat_backend::KissatSolver;
+#elif defined(HEESCH_BACKEND_DUMP)
+#include "dumping_backend.h"
+using SATSolverImpl = dumping_backend::DumpingSolver;
 #else
 using SATSolverImpl = CMSat::SATSolver;
 #endif

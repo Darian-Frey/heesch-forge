@@ -29,8 +29,13 @@ Makefile.local
 src/sat/src/gen
 src/sat/src/sat
 src/sat/src/sat-cadical
+src/sat/src/sat-dump
 src/sat/src/sat-kissat
 src/sat/src/viz
+
+# M1.3 probe helper compiled out of line; source is committed at
+# benchmarks/breakid/probe/cms_solve.cpp.
+benchmarks/breakid/probe/cms_solve
 src/sat/src/surrounds
 src/sat/src/report
 
