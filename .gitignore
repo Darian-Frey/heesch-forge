@@ -40,6 +40,9 @@ benchmarks/breakid/probe/cms_solve
 
 # M2.1 DLX test binary (libdlx.a is already covered by `*.a` above).
 src/dlx/test_dlx
+
+# M2.2 corona-oracle test binary (libcorona.a covered by `*.a`).
+src/corona/test_corona
 src/sat/src/surrounds
 src/sat/src/report
 

@@ -10,13 +10,13 @@ This document tracks phases, gates, and current status. The proposal in `PROPOSA
 
 ## Phase status overview
 
-*Updated 2026-05-01: Phase 2 opened (M2.1 DLX kernel shipped). Phase 1 stays closed; Phase 4 unblocked but not yet started.*
+*Updated 2026-05-01: Phase 2 active (M2.1 DLX kernel + M2.2 corona oracle shipped, 2/7). Phase 1 stays closed; Phase 4 unblocked but not yet started.*
 
 | Phase | Layers | Status | Target completion |
 |-------|--------|--------|-------------------|
 | 0 — Setup | — | ✅ done (6/6) | met |
 | 1 — Engineering | L1 | ✅ closed (negative result; M1.2b deferred) | retrospective shipped |
-| 2 — Hybrid solver | L2 | 🟢 active (1/7) | +16 weeks |
+| 2 — Hybrid solver | L2 | 🟢 active (2/7) | +16 weeks |
 | 3 — Lateral grids | L4 | ⚪ not started | parallel from Phase 2 |
 | 4 — RL pilot | L3 | ⚪ not started | +28 weeks |
 | 5 — RL scale | L3 | ⚪ not started | +40 weeks |
@@ -77,7 +77,7 @@ If speedup is <2× across the board, pause Layer 1 work, write up findings as a 
 ### Milestones
 
 - [x] M2.1 — Standalone DLX library at `src/dlx/` (`dlx.hpp` + `dlx.cpp`, ~430 LOC, no external dependencies, builds to `libdlx.a`). Indexed-node implementation following Knuth's *TAOCP* §7.2.2.1 — single contiguous `std::vector<Node>` referenced by integer index, primary columns chained off a root header, secondary columns kept self-loop'd so they are covered-at-most-once. API: `Solver(primary_cols)`, `add_secondary_columns(n)`, `add_row(cols)`, `solve(callback) → count`, `count_solutions()`, `find_first(out)`. 18-test acceptance gate at `src/dlx/tests/test_dlx.cpp` (`make test`): edge cases, Knuth's §1 worked example (unique cover by rows {0, 3, 4} as published), n-queens for n ∈ {4, 5, 6, 7, 8} matched against OEIS A000170 (2, 10, 4, 40, 92), early-stop callback semantics, secondary-column behaviour, API safety (throws on add-after-solve / non-ascending columns / out-of-range columns), `nodes_explored` plumbing. All 18 pass.
-- [ ] M2.2 — Wrap DLX as a corona-completion oracle for depths 1, 2.
+- [x] M2.2 — Corona-completion oracle at `src/corona/` (`oracle.hpp` + `oracle.cpp`, ~330 LOC). Polyomino-only for now (square grid, D4 symmetry group). API: `Oracle(base_shape)`, `find_completion(interior, out)`, `count_completions(interior, cap)`, plus `last_candidate_count()` and `last_nodes_explored()` diagnostics. Reduces "is the corona around `interior` completable by oriented copies of the shape?" to an exact-cover problem on `src/dlx/`'s `Solver`: halo cells are primary columns (covered exactly once); cells the candidate tiles touch outside both interior and halo are secondary columns (covered at most once, preventing tile-tile overlap outside the halo). 17-test acceptance gate at `src/corona/tests/test_corona.cpp` (`make test`): geometric primitives (the 8 D4 orientations applied to (1, 0) form the four unit vectors; halo of a single square is the four neighbours; halo of a domino is 6 cells), tiny-shape oracles (monomino corona-1 has 4-tile completion; horizontal domino and 2×2 square have valid completions), Kaplan-dataset cross-checks (Hh = 1 heptominos succeed at our layer; the n = 9 Hh = 0 nonomino fails), and behaviour / API (count cap, empty-shape rejection, diagnostic plumbing). All 17 pass. Depths 2+ are achieved by composing this oracle: pass an interior that already includes corona-1 cells, ask for completion of corona-2. The oracle is **Hh-semantics** (allowing holes in further-out cells) — hole-free Hc semantics requires a separate iteration layer (M2.3 / M2.4 territory; mirrors heesch-sat's `iterateUntilSimplyConnected`).
 - [ ] M2.3 — Define handoff format: DLX output → SAT input.
 - [ ] M2.4 — End-to-end hybrid pipeline; regression suite green.
 - [ ] M2.5 — Benchmark across all of Kaplan's dataset; identify crossover depth.
@@ -200,6 +200,13 @@ When a planned file is created, move its row from this table into the "Live now"
 ---
 
 ## Status notes (latest first)
+
+**1 May 2026 (Phase 2 continues).** M2.2 closed.
+
+- M2.2: corona-completion oracle at `src/corona/`. `oracle.hpp` + `oracle.cpp` (~330 LOC; depends on `src/dlx/libdlx.a` from M2.1, no other libraries). Polyomino-only for M2.2 — square grid, full D4 symmetry group. API: `Oracle(base_shape)` constructor, `find_completion(interior, out) → bool`, `count_completions(interior, cap) → size_t`, `last_candidate_count()` and `last_nodes_explored()` diagnostics.
+- Reduction: "is the corona around `interior` completable by oriented copies of the shape?" becomes an exact-cover problem on `dlx::Solver`. Halo cells are primary columns (covered exactly once); cells the candidate tiles touch outside both interior and halo are secondary columns (covered at most once, preventing tile-tile overlap outside the halo). For each oriented shape × anchor cell × halo cell, the placement that puts the anchor on the halo cell is a candidate row, rejected if it overlaps the interior or fails to touch the halo at all.
+- 17-test acceptance gate at `src/corona/tests/test_corona.cpp` (`make test`). Coverage: geometric primitives (the 8 D4 orientations applied to (1, 0) form the four unit vectors; halo of a single square is the four neighbours; halo of a domino is 6 cells), tiny-shape oracles (monomino corona-1 has 4-tile completion; domino and 2×2 square have valid completions), Kaplan-dataset cross-checks (n = 7 Hh = 1 heptominos succeed; n = 9 Hh = 0 nonomino fails), and behaviour / API (count cap, empty-shape rejection, diagnostic plumbing). **All 17 pass.**
+- **Hh-semantics for now.** The oracle answers basic corona completion (allowing holes in the further-out region), matching heesch-sat's `cur_solver` SAT call before its `iterateUntilSimplyConnected` walkback. The hole-free Hc semantics is a separate iteration layer that lands under M2.3 / M2.4.
 
 **1 May 2026 (Phase 2 begins).** M2.1 closed; Phase 2 opened.
 

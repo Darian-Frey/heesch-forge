@@ -31,7 +31,8 @@ heesch-forge/
 ├── CLAUDE.md           — handoff doc for Claude Code / multi-LLM continuation
 ├── src/
 │   ├── sat/            — fork of Kaplan's heesch-sat, modernised (Layer 1)
-│   ├── dlx/            — Algorithm X / Dancing Links implementation
+│   ├── dlx/            — Algorithm X / Dancing Links library (Layer 2)
+│   ├── corona/         — corona-completion oracle on top of dlx (Layer 2)
 │   ├── rl/             — cross-entropy / RL agent over shape space
 │   └── theory/         — formalisation experiments (Lean / SageMath)
 ├── data/
