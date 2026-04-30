@@ -37,6 +37,9 @@ src/sat/src/viz
 # M1.3 probe helper compiled out of line; source is committed at
 # benchmarks/breakid/probe/cms_solve.cpp.
 benchmarks/breakid/probe/cms_solve
+
+# M2.1 DLX test binary (libdlx.a is already covered by `*.a` above).
+src/dlx/test_dlx
 src/sat/src/surrounds
 src/sat/src/report
 

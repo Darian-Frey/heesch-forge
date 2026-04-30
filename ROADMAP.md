@@ -10,13 +10,13 @@ This document tracks phases, gates, and current status. The proposal in `PROPOSA
 
 ## Phase status overview
 
-*Updated 2026-05-01: Phase 1 closed via negative-result decision gate. Retrospective at `paper/drafts/phase1-engineering-negatives.md`. Phase 2 (hybrid solver / encoding refactor) and Phase 4 (RL pilot with v1 solver) proceed in parallel.*
+*Updated 2026-05-01: Phase 2 opened (M2.1 DLX kernel shipped). Phase 1 stays closed; Phase 4 unblocked but not yet started.*
 
 | Phase | Layers | Status | Target completion |
 |-------|--------|--------|-------------------|
 | 0 — Setup | — | ✅ done (6/6) | met |
 | 1 — Engineering | L1 | ✅ closed (negative result; M1.2b deferred) | retrospective shipped |
-| 2 — Hybrid solver | L2 | ⚪ not started | +16 weeks |
+| 2 — Hybrid solver | L2 | 🟢 active (1/7) | +16 weeks |
 | 3 — Lateral grids | L4 | ⚪ not started | parallel from Phase 2 |
 | 4 — RL pilot | L3 | ⚪ not started | +28 weeks |
 | 5 — RL scale | L3 | ⚪ not started | +40 weeks |
@@ -76,7 +76,7 @@ If speedup is <2× across the board, pause Layer 1 work, write up findings as a 
 
 ### Milestones
 
-- [ ] M2.1 — DLX implementation in `src/dlx/`. Unit tests against Knuth's worked examples.
+- [x] M2.1 — Standalone DLX library at `src/dlx/` (`dlx.hpp` + `dlx.cpp`, ~430 LOC, no external dependencies, builds to `libdlx.a`). Indexed-node implementation following Knuth's *TAOCP* §7.2.2.1 — single contiguous `std::vector<Node>` referenced by integer index, primary columns chained off a root header, secondary columns kept self-loop'd so they are covered-at-most-once. API: `Solver(primary_cols)`, `add_secondary_columns(n)`, `add_row(cols)`, `solve(callback) → count`, `count_solutions()`, `find_first(out)`. 18-test acceptance gate at `src/dlx/tests/test_dlx.cpp` (`make test`): edge cases, Knuth's §1 worked example (unique cover by rows {0, 3, 4} as published), n-queens for n ∈ {4, 5, 6, 7, 8} matched against OEIS A000170 (2, 10, 4, 40, 92), early-stop callback semantics, secondary-column behaviour, API safety (throws on add-after-solve / non-ascending columns / out-of-range columns), `nodes_explored` plumbing. All 18 pass.
 - [ ] M2.2 — Wrap DLX as a corona-completion oracle for depths 1, 2.
 - [ ] M2.3 — Define handoff format: DLX output → SAT input.
 - [ ] M2.4 — End-to-end hybrid pipeline; regression suite green.
@@ -200,6 +200,12 @@ When a planned file is created, move its row from this table into the "Live now"
 ---
 
 ## Status notes (latest first)
+
+**1 May 2026 (Phase 2 begins).** M2.1 closed; Phase 2 opened.
+
+- M2.1: standalone DLX library at `src/dlx/`. `dlx.hpp` + `dlx.cpp` (~430 LOC, no external dependencies; builds to `libdlx.a` via the per-directory Makefile). Indexed-node Algorithm-X implementation following Knuth's *TAOCP* §7.2.2.1 — `Solver(primary_cols)` constructor, `add_secondary_columns(n)`, `add_row(sorted_cols) → row_id`, `solve(callback) → count`, plus `count_solutions()` and `find_first(out)` convenience wrappers. Primary columns chain off a root header (covered-exactly-once); secondary columns self-loop (covered-at-most-once); the search loop's "S heuristic" (smallest column first, ties broken leftmost-first) is straight from the paper.
+- 18-test acceptance gate at `src/dlx/tests/test_dlx.cpp` runnable via `make test`. Coverage: empty-matrix edge cases (zero / non-zero column count, single all-covering row, two disjoint rows), Knuth's §1 worked example (the published unique cover by rows {0, 3, 4} reproduces), n-queens for n ∈ {4, 5, 6, 7, 8} matched against OEIS A000170 (counts 2, 10, 4, 40, 92), early-stop callback semantics, secondary-only edge case, API safety (throws on add-after-solve, non-ascending columns, out-of-range columns), and `nodes_explored` accounting. **All 18 pass.**
+- Stand-alone library by design: `src/dlx/` does not link against `src/sat/`'s upstream `dlx.h`. The wiring of the new DLX as a corona-completion oracle is M2.2's scope; M2.1 ships only the kernel + tests so the encoding-refactor work in M2.2-M2.4 starts from a known-correct DLX.
 
 **1 May 2026 (close of day).** M1.6 + M1.7 closed; **Phase 1 closed**.
 
