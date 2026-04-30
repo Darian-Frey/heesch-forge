@@ -10,13 +10,13 @@ This document tracks phases, gates, and current status. The proposal in `PROPOSA
 
 ## Phase status overview
 
-*Updated 2026-05-01: Phase 2 active (M2.1 DLX kernel + M2.2 corona oracle shipped, 2/7). Phase 1 stays closed; Phase 4 unblocked but not yet started.*
+*Updated 2026-05-01: Phase 2 active (M2.1 + M2.2 + M2.3 shipped, 3/7). Phase 1 stays closed; Phase 4 unblocked but not yet started.*
 
 | Phase | Layers | Status | Target completion |
 |-------|--------|--------|-------------------|
 | 0 — Setup | — | ✅ done (6/6) | met |
 | 1 — Engineering | L1 | ✅ closed (negative result; M1.2b deferred) | retrospective shipped |
-| 2 — Hybrid solver | L2 | 🟢 active (2/7) | +16 weeks |
+| 2 — Hybrid solver | L2 | 🟢 active (3/7) | +16 weeks |
 | 3 — Lateral grids | L4 | ⚪ not started | parallel from Phase 2 |
 | 4 — RL pilot | L3 | ⚪ not started | +28 weeks |
 | 5 — RL scale | L3 | ⚪ not started | +40 weeks |
@@ -78,7 +78,7 @@ If speedup is <2× across the board, pause Layer 1 work, write up findings as a 
 
 - [x] M2.1 — Standalone DLX library at `src/dlx/` (`dlx.hpp` + `dlx.cpp`, ~430 LOC, no external dependencies, builds to `libdlx.a`). Indexed-node implementation following Knuth's *TAOCP* §7.2.2.1 — single contiguous `std::vector<Node>` referenced by integer index, primary columns chained off a root header, secondary columns kept self-loop'd so they are covered-at-most-once. API: `Solver(primary_cols)`, `add_secondary_columns(n)`, `add_row(cols)`, `solve(callback) → count`, `count_solutions()`, `find_first(out)`. 18-test acceptance gate at `src/dlx/tests/test_dlx.cpp` (`make test`): edge cases, Knuth's §1 worked example (unique cover by rows {0, 3, 4} as published), n-queens for n ∈ {4, 5, 6, 7, 8} matched against OEIS A000170 (2, 10, 4, 40, 92), early-stop callback semantics, secondary-column behaviour, API safety (throws on add-after-solve / non-ascending columns / out-of-range columns), `nodes_explored` plumbing. All 18 pass.
 - [x] M2.2 — Corona-completion oracle at `src/corona/` (`oracle.hpp` + `oracle.cpp`, ~330 LOC). Polyomino-only for now (square grid, D4 symmetry group). API: `Oracle(base_shape)`, `find_completion(interior, out)`, `count_completions(interior, cap)`, plus `last_candidate_count()` and `last_nodes_explored()` diagnostics. Reduces "is the corona around `interior` completable by oriented copies of the shape?" to an exact-cover problem on `src/dlx/`'s `Solver`: halo cells are primary columns (covered exactly once); cells the candidate tiles touch outside both interior and halo are secondary columns (covered at most once, preventing tile-tile overlap outside the halo). 17-test acceptance gate at `src/corona/tests/test_corona.cpp` (`make test`): geometric primitives (the 8 D4 orientations applied to (1, 0) form the four unit vectors; halo of a single square is the four neighbours; halo of a domino is 6 cells), tiny-shape oracles (monomino corona-1 has 4-tile completion; horizontal domino and 2×2 square have valid completions), Kaplan-dataset cross-checks (Hh = 1 heptominos succeed at our layer; the n = 9 Hh = 0 nonomino fails), and behaviour / API (count cap, empty-shape rejection, diagnostic plumbing). All 17 pass. Depths 2+ are achieved by composing this oracle: pass an interior that already includes corona-1 cells, ask for completion of corona-2. The oracle is **Hh-semantics** (allowing holes in further-out cells) — hole-free Hc semantics requires a separate iteration layer (M2.3 / M2.4 territory; mirrors heesch-sat's `iterateUntilSimplyConnected`).
-- [ ] M2.3 — Define handoff format: DLX output → SAT input.
+- [x] M2.3 — `CoronaState` handoff type at `src/corona/corona_state.{hpp,cpp}` (~210 LOC). Records the placements at each corona level: level 0 is canonical (the original shape at origin, orientation R0); higher levels are appended via `add_level(placements)`. Helpers: `interior_cells()` (union over every placement) and `halo_cells()` for use as the next-level oracle's input. Text serialisation defined and committed (version-tagged, line-oriented, comment-friendly): `v 1`, `shape <coord pairs>`, `level k` blocks with indented `<x> <y> <orientation_tag>` placement lines. Orientation tags are the eight D4 elements (`R0` … `MR270`); `tag_of(orient)` and `orientation_of_tag(tag)` are total / throwing helpers. Round-trip is byte-identical: `write → read → write` produces the same bytes. 14 new tests inside `src/corona/tests/test_corona.cpp` (now 31 total, all PASS) cover the type, the format, malformed-input rejection (wrong version, missing shape, out-of-order levels, non-canonical level-0), and — load-bearing — the composition cycle: oracle finds corona-1 → push to `CoronaState` → oracle on the new interior → expected outcome (Hc = 1 / Hh = 1 heptomino: corona-2 fails; same-shape after text round-trip: also fails). The DLX → state → DLX → … chain is verified to survive serialisation, which is the protocol M2.4 will use to hand state to a SAT solver.
 - [ ] M2.4 — End-to-end hybrid pipeline; regression suite green.
 - [ ] M2.5 — Benchmark across all of Kaplan's dataset; identify crossover depth.
 - [ ] M2.6 — Investigate joint DLX+SAT formulation.
@@ -200,6 +200,24 @@ When a planned file is created, move its row from this table into the "Live now"
 ---
 
 ## Status notes (latest first)
+
+**1 May 2026 (Phase 2 continues, M2.3).** M2.3 closed.
+
+- M2.3: handoff format defined and implemented at `src/corona/corona_state.{hpp,cpp}` (~210 LOC). `CoronaState(base_shape)` constructs a state with the canonical level-0 placement (origin (0,0), orientation R0); `add_level(placements)` appends a corona; `interior_cells()` and `halo_cells()` produce the input the M2.2 oracle wants for the next level. Text serialisation is version-tagged, line-oriented, comment-friendly:
+
+  ```text
+  v 1
+  shape <x0 y0 x1 y1 ...>
+  level 0
+    0 0 R0
+  level 1
+    <ox> <oy> <orient>
+    ...
+  ```
+
+  Orientation tags (`R0`, `R90`, `R180`, `R270`, `M`, `MR90`, `MR180`, `MR270`) round-trip via `tag_of` / `orientation_of_tag`. `write → read → write` is byte-identical.
+- 14 new tests inside `src/corona/tests/test_corona.cpp` (now 31 total, all PASS): tag round-trip, format malformed-input rejection (wrong version, missing shape, out-of-order levels, non-canonical level 0), and — load-bearing — composition through the oracle. The composition test uses the n = 7 Hh = 1 heptomino: oracle finds corona-1, push to `CoronaState`, oracle on the new interior fails for corona-2 (consistent with Hh = 1). The serialisation round-trip test repeats the cycle with text serialisation interposed and confirms identical interiors and identical corona-2 verdict.
+- This is the protocol M2.4 will use to drive a SAT solver from a DLX-produced inner state. Defining it as a self-contained type with a stable text format means the SAT-side wiring under M2.4 only needs to consume `CoronaState` (in memory or via a temp file) — no DLX-internal data structures leak across the boundary.
 
 **1 May 2026 (Phase 2 continues).** M2.2 closed.
 

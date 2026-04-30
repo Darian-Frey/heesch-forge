@@ -4,12 +4,14 @@
 // oracle on small shapes whose answers we can derive by hand or look up
 // in the Kaplan dataset (paper/lit/bibtex.bib KaplanA8).
 
+#include "../corona_state.hpp"
 #include "../oracle.hpp"
 
 #include <algorithm>
 #include <cstdio>
 #include <cstdlib>
 #include <functional>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -20,12 +22,15 @@ using ::heesch_forge::corona::all_orientations;
 using ::heesch_forge::corona::apply_orientation;
 using ::heesch_forge::corona::cell;
 using ::heesch_forge::corona::cell_set;
+using ::heesch_forge::corona::CoronaState;
 using ::heesch_forge::corona::halo_of;
 using ::heesch_forge::corona::Oracle;
 using ::heesch_forge::corona::Orientation;
+using ::heesch_forge::corona::orientation_of_tag;
 using ::heesch_forge::corona::Placement;
 using ::heesch_forge::corona::placed_cells;
 using ::heesch_forge::corona::shape_cells;
+using ::heesch_forge::corona::tag_of;
 
 struct TestCase {
 	const char* name;
@@ -376,6 +381,251 @@ TEST( find_completion_records_diagnostics )
 	REQUIRE( oracle.find_completion( interior, out ) );
 	REQUIRE( oracle.last_candidate_count() > 0u );
 	REQUIRE( oracle.last_nodes_explored() > 0u );
+	return true;
+}
+
+// ============================================================
+// 5. CoronaState — handoff format (M2.3)
+// ============================================================
+
+TEST( orientation_tag_round_trip )
+{
+	for ( const auto o : all_orientations ) {
+		const std::string tag = tag_of( o );
+		REQUIRE( !tag.empty() );
+		const auto back = orientation_of_tag( tag );
+		REQUIRE( o == back );
+	}
+	return true;
+}
+
+TEST( orientation_tag_unknown_throws )
+{
+	bool threw = false;
+	try {
+		(void)orientation_of_tag( "WAT" );
+	} catch ( const std::runtime_error& ) {
+		threw = true;
+	}
+	REQUIRE( threw );
+	return true;
+}
+
+TEST( corona_state_initial_depth_is_one )
+{
+	shape_cells shape { { 0, 0 }, { 1, 0 } };
+	CoronaState st { shape };
+	REQUIRE_EQ( st.depth(), 1u );
+	REQUIRE_EQ( st.level( 0 ).size(), 1u );
+	REQUIRE_EQ( st.level( 0 )[0].origin.first,  0 );
+	REQUIRE_EQ( st.level( 0 )[0].origin.second, 0 );
+	REQUIRE( st.level( 0 )[0].orient == Orientation::R0 );
+	return true;
+}
+
+TEST( corona_state_rejects_empty_shape )
+{
+	bool threw = false;
+	try {
+		CoronaState st { shape_cells {} };
+	} catch ( const std::invalid_argument& ) {
+		threw = true;
+	}
+	REQUIRE( threw );
+	return true;
+}
+
+TEST( corona_state_interior_at_depth_1_is_base_shape )
+{
+	shape_cells shape { { 0, 0 }, { 1, 0 }, { 0, 1 } };
+	CoronaState st { shape };
+	const cell_set inside = st.interior_cells();
+	REQUIRE_EQ( inside.size(), shape.size() );
+	for ( const auto& c : shape ) {
+		REQUIRE( inside.contains( c ) );
+	}
+	return true;
+}
+
+TEST( corona_state_add_level_grows_interior )
+{
+	shape_cells shape { { 0, 0 } };           // monomino
+	CoronaState st { shape };
+	REQUIRE_EQ( st.interior_cells().size(), 1u );
+	st.add_level( {
+		{ {  1,  0 }, Orientation::R0 },
+		{ { -1,  0 }, Orientation::R0 },
+		{ {  0,  1 }, Orientation::R0 },
+		{ {  0, -1 }, Orientation::R0 },
+	} );
+	REQUIRE_EQ( st.depth(), 2u );
+	REQUIRE_EQ( st.interior_cells().size(), 5u );      // 1 + 4 monominoes
+	REQUIRE_EQ( st.halo_cells().size(), 8u );          // halo of a + shape
+	return true;
+}
+
+TEST( corona_state_text_round_trip )
+{
+	shape_cells shape { { 0, 0 }, { 1, 0 }, { 0, 1 } };
+	CoronaState st { shape };
+	st.add_level( {
+		{ { 2, 1 }, Orientation::R0 },
+		{ { -1, -1 }, Orientation::M },
+	} );
+
+	std::ostringstream first;
+	st.write( first );
+
+	std::istringstream is { first.str() };
+	const CoronaState parsed = CoronaState::read( is );
+
+	std::ostringstream second;
+	parsed.write( second );
+
+	// Text round-trip must be byte-identical.
+	REQUIRE( first.str() == second.str() );
+	REQUIRE_EQ( parsed.depth(), st.depth() );
+	REQUIRE_EQ( parsed.level( 1 ).size(), 2u );
+	REQUIRE( parsed.level( 1 )[0].orient == Orientation::R0 );
+	REQUIRE( parsed.level( 1 )[1].orient == Orientation::M );
+	return true;
+}
+
+TEST( corona_state_read_skips_comments_and_whitespace )
+{
+	const std::string text =
+		"# leading comment\n"
+		"v 1\n"
+		"\n"
+		"shape 0 0 1 0\n"
+		"# inline comment between sections\n"
+		"level 0\n"
+		"  0 0 R0\n";
+	std::istringstream is { text };
+	const CoronaState parsed = CoronaState::read( is );
+	REQUIRE_EQ( parsed.depth(), 1u );
+	REQUIRE_EQ( parsed.base_shape().size(), 2u );
+	return true;
+}
+
+TEST( corona_state_read_rejects_wrong_version )
+{
+	const std::string text = "v 99\nshape 0 0\nlevel 0\n  0 0 R0\n";
+	std::istringstream is { text };
+	bool threw = false;
+	try {
+		(void)CoronaState::read( is );
+	} catch ( const std::runtime_error& ) {
+		threw = true;
+	}
+	REQUIRE( threw );
+	return true;
+}
+
+TEST( corona_state_read_rejects_missing_shape )
+{
+	const std::string text = "v 1\nlevel 0\n  0 0 R0\n";
+	std::istringstream is { text };
+	bool threw = false;
+	try {
+		(void)CoronaState::read( is );
+	} catch ( const std::runtime_error& ) {
+		threw = true;
+	}
+	REQUIRE( threw );
+	return true;
+}
+
+TEST( corona_state_read_rejects_out_of_order_levels )
+{
+	const std::string text =
+		"v 1\nshape 0 0\n"
+		"level 0\n  0 0 R0\n"
+		"level 2\n  3 0 R0\n";              // skipped level 1
+	std::istringstream is { text };
+	bool threw = false;
+	try {
+		(void)CoronaState::read( is );
+	} catch ( const std::runtime_error& ) {
+		threw = true;
+	}
+	REQUIRE( threw );
+	return true;
+}
+
+TEST( corona_state_read_rejects_non_canonical_level0 )
+{
+	const std::string text =
+		"v 1\nshape 0 0\n"
+		"level 0\n  3 4 R90\n";                // not (0,0)/R0
+	std::istringstream is { text };
+	bool threw = false;
+	try {
+		(void)CoronaState::read( is );
+	} catch ( const std::runtime_error& ) {
+		threw = true;
+	}
+	REQUIRE( threw );
+	return true;
+}
+
+// Composition: this is the load-bearing handoff test. Take the M2.2
+// oracle, find a corona-1 completion, push it onto a CoronaState, then
+// hand the state's interior back to the oracle for corona-2. For a
+// Hh = 1 heptomino (Kaplan dataset, line 1 of 07omino_0up.txt) corona-1
+// must succeed and corona-2 must fail. This proves the DLX -> state ->
+// DLX handoff is sound.
+
+TEST( handoff_round_trip_via_oracle )
+{
+	const shape_cells shape =
+		parse_shape( "1 0 1 1 0 2 1 2 1 3 2 3 3 3" );
+	REQUIRE_EQ( shape.size(), 7u );
+	Oracle oracle( shape );
+	CoronaState st { shape };
+
+	// Corona 1.
+	std::vector<Placement> level_1;
+	REQUIRE( oracle.find_completion( st.interior_cells(), level_1 ) );
+	REQUIRE( placements_cover_halo( oracle, st.interior_cells(), level_1 ) );
+	st.add_level( level_1 );
+	REQUIRE_EQ( st.depth(), 2u );
+
+	// Corona 2 must fail (Hh = 1).
+	std::vector<Placement> level_2;
+	const bool ok2 = oracle.find_completion( st.interior_cells(), level_2 );
+	REQUIRE( !ok2 );
+	REQUIRE_EQ( level_2.size(), 0u );
+	return true;
+}
+
+TEST( handoff_serialises_oracle_output_round_trip )
+{
+	const shape_cells shape =
+		parse_shape( "1 0 1 1 0 2 1 2 1 3 2 3 3 3" );
+	Oracle oracle( shape );
+	CoronaState st { shape };
+	std::vector<Placement> level_1;
+	REQUIRE( oracle.find_completion( st.interior_cells(), level_1 ) );
+	st.add_level( std::move( level_1 ) );
+
+	// Round-trip via text.
+	std::ostringstream first;
+	st.write( first );
+	std::istringstream is { first.str() };
+	const CoronaState parsed = CoronaState::read( is );
+
+	// Parsed state must have identical interior to the original.
+	const cell_set a = st.interior_cells();
+	const cell_set b = parsed.interior_cells();
+	REQUIRE( a == b );
+
+	// And asking the oracle for corona-2 against the parsed state must
+	// give the same answer (no completion, since Hh = 1).
+	std::vector<Placement> level_2;
+	const bool ok = oracle.find_completion( parsed.interior_cells(),
+	                                          level_2 );
+	REQUIRE( !ok );
 	return true;
 }
 
