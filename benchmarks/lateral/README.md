@@ -19,13 +19,22 @@ catalogue. Phase 3 produces one.
 
 ## Status
 
-- **M3.1 (bevelhex generation verified)** — closed; results in
-  `results/m3.1-bevelhex-sweep.csv`. Discussion below.
-- M3.2 (bevelhex enumeration up to a useful $n$) — see
-  ROADMAP for the open scope.
-- **M3.3 (octasquare sweep)** — closed; results in
+- **M3.1 (bevelhex generation verified, n = 4..7)** — closed;
+  results in `results/m3.1-bevelhex-sweep.csv`. Discussion
+  below.
+- **M3.2 (bevelhex extended, n = 4..10)** — closed; full sweep
+  in `results/m3.2-bevelhex-extended.csv`. **Two Hc = 2
+  bevelhex polyforms discovered** (n = 9 and n = 10), the
+  project's first non-trivial Heesch-number result on a
+  non-omino / non-hex / non-iamond grid. Catalogues at
+  `results/m3.2-bevelhex-hc1.txt` (315 shapes) and
+  `results/m3.2-bevelhex-hc2.txt` (2 shapes).
+- **M3.3 (octasquare sweep, s + o ≤ 6)** — closed; results in
   `results/m3.3-octasquare-sweep.csv`. Discussion below.
-- M3.4 (Hc = 4 catalogue analogue) — pending.
+- M3.4 (Hc = 4 catalogue analogue) — pending. With M3.2 having
+  produced Hc = 2 bevelhex shapes, the conditional ("verify
+  Hc = 4 analogue exists if Hc = 2 / 3 do") for M3.4 has its
+  first prerequisite.
 
 ## M3.1 — bevelhex sweep, sizes 4–7
 
@@ -95,6 +104,61 @@ the script; they are gitignored because they are regenerable from
 the script and the small ones add ~700 kB total. `m3.1-bevelhex-
 sweep.csv`, `m3.1-bevelhex-sweep.log`, and `m3.1-bevelhex-hc1.txt`
 are the canonical record and are committed.
+
+## M3.2 — bevelhex extension to n = 10
+
+The M3.1 sweep was extended to n ∈ {8, 9, 10} via the same
+`run_bevelhex_sweep.sh` harness; the canonical extended CSV is
+`results/m3.2-bevelhex-extended.csv`. Cumulative numbers (n = 4 → 10):
+
+| n | shapes | wall    | Hc = 0 | Hc = 1 | Hc = 2 | iso | inconc |
+|--:|-------:|--------:|-------:|-------:|-------:|----:|-------:|
+| 4 |     49 |  0.019s |     44 |      5 |      0 |   0 |      0 |
+| 5 |    255 |  0.082s |    244 |     11 |      0 |   0 |      0 |
+| 6 |  1,327 |  2.545s |  1,252 |      3 |      0 |  65 |      7 |
+| 7 |  7,796 |  1.011s |  7,780 |     16 |      0 |   0 |      0 |
+| 8 | 45,876 |  6.016s | 45,835 |     41 |      0 |   0 |      0 |
+| 9 | 278,002 | 36.717s | 277,958 |    43 |  **1** |   0 |      0 |
+| 10 | 1,697,278 | 233.501s | 1,697,081 |  196 |  **1** |   0 |      0 |
+| **total** | **2,030,583** | ~280 s | **2,030,194** | **315** | **2** | **65** | **7** |
+
+### Hc = 2 bevelhex polyforms
+
+Two distinct Hc = 2 = Hh = 2 bevelhex polyforms found in the
+sweep, in `gen` output coordinates (committed at
+`results/m3.2-bevelhex-hc2.txt`):
+
+```text
+n = 9:   B  9 -12   8 -10   9  -9  12  -9  10  -8   3  -6   6  -6   2  -4   0   0
+n = 10:  B  9  -3  10  -2   0   0   3   0   6   0   9   0   2   2   8   2   0   3   6   3
+```
+
+These are **the first known Hc ≥ 2 bevelhex polyforms.** Kaplan
+2022 (`KaplanA8`) catalogued Hc up to 4 on polyhex / polyiamond
+and up to 3 on polyomino; the (4.6.12) bevelhex grid was
+generation-supported in heesch-sat but had no published
+Heesch-number results before this sweep.
+
+### What was not found
+
+No Hc ≥ 3 bevelhex polyforms through n = 10. By analogy with
+Kaplan's polyomino catalogue (where the first Hc = 2 polyomino
+appears at n = 11 and the first Hc = 3 polyomino at n = 17),
+Hc = 3 bevelhex polyforms (if any) plausibly need n ≥ 12.
+Extending the sweep to n = 11 would take ~25 minutes of wall on
+this hardware (extrapolating from the n = 10 throughput of
+~7,300 shapes/s and the size-9-to-size-10 multiplier of ≈ 6×);
+n = 12 ≈ 2.5 h. Both are tractable but expensive enough to
+sit under "M3.2-followup" rather than blocking M3.4.
+
+### Throughput notes
+
+Generation + classification scales near-linearly with shape
+count from n = 7 onwards: ~7,500-8,000 shapes/s. The size-6
+walls were dominated by the 65 isohedral checks rather than the
+non-tiler classification cost; once shapes get above n = 7 those
+do not appear, so wall correlates cleanly with the shape-count
+multiplier (× 5.9 from n = 8 → 9, × 6.1 from n = 9 → 10).
 
 ## M3.3 — octasquare sweep, (s, o) with s + o ≤ 6
 

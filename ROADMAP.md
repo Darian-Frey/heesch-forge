@@ -10,14 +10,14 @@ This document tracks phases, gates, and current status. The proposal in `PROPOSA
 
 ## Phase status overview
 
-*Updated 2026-05-01: Phase 2 closed via M2.7. **Phase 3 active with M3.1 + M3.3** (bevelhex + octasquare verified; 9,890 shapes classified across the two grids; **75 Hc = 1 lateral-grid polyforms catalogued**, the project's first Heesch-number data outside Kaplan's omino / hex / iamond grids). M2.6-followup (bounded-DLX + SAT partial-state seed) and Phase 4 (RL pilot) are the load-bearing open items. Phase 1 closed.*
+*Updated 2026-05-01: Phase 2 closed via M2.7. **Phase 3 active with M3.1 + M3.2 + M3.3** (bevelhex + octasquare classified; **2,031,046 polyforms across the two grids; 355 Hc = 1 catalogued; TWO Hc = 2 BEVELHEX POLYFORMS DISCOVERED at n = 9 and n = 10**, the first known Hc ≥ 2 results on a non-omino / non-hex / non-iamond grid). M2.6-followup (bounded-DLX + SAT partial-state seed) and Phase 4 (RL pilot) are the load-bearing open items. Phase 1 closed.*
 
 | Phase | Layers | Status | Target completion |
 |-------|--------|--------|-------------------|
 | 0 — Setup | — | ✅ done (6/6) | met |
 | 1 — Engineering | L1 | ✅ closed (negative result; M1.2b deferred) | retrospective shipped |
 | 2 — Hybrid solver | L2 | ✅ closed (6/7; M2.4 partial; bounded-joint deferred) | retrospective shipped |
-| 3 — Lateral grids | L4 | 🟢 active (2/5) | parallel from Phase 2 |
+| 3 — Lateral grids | L4 | 🟢 active (3/5; **2 Hc=2 bevelhex found**) | parallel from Phase 2 |
 | 4 — RL pilot | L3 | ⚪ not started | +28 weeks |
 | 5 — RL scale | L3 | ⚪ not started | +40 weeks |
 | 6 — Theory | L5 | ⚪ continuous from Phase 1 | +52 weeks |
@@ -97,7 +97,7 @@ Demonstrable order-of-magnitude speedup on inner coronas (depth 1, 2) and no slo
 ### Milestones
 
 - [x] M3.1 — Bevelhex generation + classification verified at sizes 4–7. Reproducible sweep at `benchmarks/lateral/run_bevelhex_sweep.sh`; canonical CSV at `benchmarks/lateral/results/m3.1-bevelhex-sweep.csv`. Total: **9,427 free bevelhex polyforms classified in 3.6 s wall** across n = 4 → 7 (49 / 255 / 1,327 / 7,796 shapes per size). Hc = 1 catalogued (5 / 11 / 3 / 16 shapes per size = 35 total, list at `results/m3.1-bevelhex-hc1.txt`); **no Hc ≥ 2 found yet** through n = 7. 65 isohedral tilers and 7 inconclusives at n = 6; sizes 4/5/7 had none. **No bugs found in upstream's bevelhex code** — M3.1's literal task is no-bugs-report. Full write-up at `benchmarks/lateral/README.md`. The "extend to n ≈ 12 to find Hc ≥ 2" investigation is M3.2's scope.
-- [ ] M3.2 — Enumerate bevelhex polyforms up to n_max ≈ 12 (revisit upper bound based on cost).
+- [x] M3.2 — Bevelhex sweep extended to n = 4..10. Reproducible at `benchmarks/lateral/run_bevelhex_sweep.sh`; canonical CSV at `benchmarks/lateral/results/m3.2-bevelhex-extended.csv`. **2,030,583 free polyforms classified** across the seven sizes (~280 s wall, ~7 500 shapes/s on this hardware once n ≥ 7). **Two Hc = 2 bevelhex polyforms found** — one at n = 9, one at n = 10 — committed at `results/m3.2-bevelhex-hc2.txt`. These are **the first known Hc ≥ 2 bevelhex polyforms** (Kaplan 2022 catalogued Hc up to 4 on polyhex / polyiamond and up to 3 on polyomino; the bevelhex grid was generation-supported in heesch-sat but had no published Heesch-number results). 315 Hc = 1 catalogued total at `results/m3.2-bevelhex-hc1.txt`. **No Hc ≥ 3 found through n = 10**; pushing to n = 11 would take ~25 min wall, n = 12 ~2.5 h — sits as M3.2-followup rather than blocking M3.4.
 - [x] M3.3 — Octasquare (4.8.8) sweep over (squares, octagons) pairs with s + o ≤ 6. Reproducible at `benchmarks/lateral/run_octasquare_sweep.sh`; canonical CSV at `benchmarks/lateral/results/m3.3-octasquare-sweep.csv`. **463 free polyforms classified in 1.5 s wall** across 14 non-empty (s, o) pairs; one pair (5, 1) returned 0 shapes. **40 Hc = 1 catalogued** at `results/m3.3-octasquare-hc1.txt`; **no Hc ≥ 2 found**. Notable contrast with bevelhex M3.1: octasquare's Hc = 1 rate is 8.6 % (40/463) vs bevelhex's 0.37 % (35/9 427), and its isohedral-tiler rate is 18.8 % (87/463) vs bevelhex's 0.69 % — the (4.8.8) local geometry is markedly more "tiling-friendly" at small sizes. Bevelhex-vs-octasquare comparison table in the lateral README. The 40 + 35 = 75 Hc = 1 lateral-grid polyforms catalogued together are heesch-forge's first new published Heesch-number data outside the omino / hex / iamond grids Kaplan covered in 2022.
 - [ ] M3.4 — Tabulate analogues of Kaplan's H=4 catalogue.
 - [ ] M3.5 — Short empirical paper draft.
@@ -200,6 +200,27 @@ When a planned file is created, move its row from this table into the "Live now"
 ---
 
 ## Status notes (latest first)
+
+**1 May 2026 (M3.2, bevelhex extension — first Hc ≥ 2 lateral-grid finding).** Bevelhex sweep extended from M3.1's n = 4..7 to n = 4..10. Reproducible via `bash benchmarks/lateral/run_bevelhex_sweep.sh 4 5 6 7 8 9 10`; canonical extended CSV at `benchmarks/lateral/results/m3.2-bevelhex-extended.csv`.
+
+| n | shapes | wall    | Hc = 0 | Hc = 1 | Hc = 2 |
+|--:|-------:|--------:|-------:|-------:|-------:|
+| 8 |  45,876 |   6.0 s |  45,835 |     41 |      0 |
+| 9 | 278,002 |  36.7 s | 277,958 |     43 |  **1** |
+| 10 | 1,697,278 | 233.5 s | 1,697,081 |  196 |  **1** |
+
+**Two distinct Hc = 2 bevelhex polyforms discovered**, one at n = 9 and one at n = 10:
+
+```text
+n = 9 :   B  9 -12   8 -10   9  -9  12  -9  10  -8   3  -6   6  -6   2  -4   0   0
+n = 10:   B  9  -3  10  -2   0   0   3   0   6   0   9   0   2   2   8   2   0   3   6   3
+```
+
+These are **the first known Hc ≥ 2 polyforms on the (4.6.12) bevelhex Archimedean grid.** Kaplan 2022 (`KaplanA8`) catalogued Hc up to 4 on polyhex / polyiamond and up to 3 on polyomino; the bevelhex grid was generation-supported in heesch-sat but had no published Heesch-number results. heesch-forge's first non-trivial result on a non-standard grid.
+
+No Hc ≥ 3 found through n = 10. By analogy with Kaplan's polyomino catalogue (first Hc = 3 at n = 17), Hc = 3 bevelhex polyforms (if any) plausibly need n ≥ 12. Pushing the sweep to n = 11 (~25 min wall) and n = 12 (~2.5 h) sits as M3.2-followup; either result — Hc ≥ 3 found or "no Hc ≥ 3 through n = 12" — is interesting. ~315 Hc = 1 catalogued total (n = 4..10) at `results/m3.2-bevelhex-hc1.txt`.
+
+Phase-3 row updated to "active (3/5; 2 Hc=2 bevelhex found)".
 
 **1 May 2026 (M3.3, octasquare).** Octasquare (4.8.8 Archimedean — squares + regular octagons) sweep over (squares, octagons) pairs with s + o ≤ 6. Reproducible at `benchmarks/lateral/run_octasquare_sweep.sh`; canonical CSV at `benchmarks/lateral/results/m3.3-octasquare-sweep.csv`. **463 free polyforms classified in 1.5 s wall** across 14 non-empty (s, o) pairs. **40 Hc = 1 catalogued** at `results/m3.3-octasquare-hc1.txt`; no Hc ≥ 2 found.
 
