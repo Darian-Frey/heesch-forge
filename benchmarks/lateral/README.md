@@ -20,10 +20,11 @@ catalogue. Phase 3 produces one.
 ## Status
 
 - **M3.1 (bevelhex generation verified)** — closed; results in
-  `results/m3.1-bevelhex-sweep.csv` and discussion below.
+  `results/m3.1-bevelhex-sweep.csv`. Discussion below.
 - M3.2 (bevelhex enumeration up to a useful $n$) — see
   ROADMAP for the open scope.
-- M3.3 (octasquare) — pending.
+- **M3.3 (octasquare sweep)** — closed; results in
+  `results/m3.3-octasquare-sweep.csv`. Discussion below.
 - M3.4 (Hc = 4 catalogue analogue) — pending.
 
 ## M3.1 — bevelhex sweep, sizes 4–7
@@ -94,6 +95,78 @@ the script; they are gitignored because they are regenerable from
 the script and the small ones add ~700 kB total. `m3.1-bevelhex-
 sweep.csv`, `m3.1-bevelhex-sweep.log`, and `m3.1-bevelhex-hc1.txt`
 are the canonical record and are committed.
+
+## M3.3 — octasquare sweep, (s, o) with s + o ≤ 6
+
+The octasquare grid (Archimedean (4.8.8) — squares + regular
+octagons) needs a 2-D sweep: `gen -octasquare -sizes <s>,<o>`
+takes the per-shape-class counts independently. The harness at
+`run_octasquare_sweep.sh` defaults to all (s, o) with s, o ≥ 1
+and s + o ∈ {2, …, 6}.
+
+Aggregate over the 14 non-empty (s, o) pairs (463 shapes,
+1.5 s wall):
+
+| s + o | shapes | Hc = 0 | Hc = 1 | Hc = 2 | iso | inconc |
+|------:|-------:|-------:|-------:|-------:|----:|-------:|
+| 2     |      1 |      0 |      0 |      0 |   1 |      0 |
+| 3     |      5 |      2 |      3 |      0 |   0 |      0 |
+| 4     |     17 |      9 |      0 |      0 |   8 |      0 |
+| 5     |     79 |     54 |     25 |      0 |   0 |      0 |
+| 6     |    361 |    271 |     12 |      0 |  78 |      0 |
+| **total** | **463** | **336** | **40** | **0** | **87** | **0** |
+
+(One (5, 1) pair returned 0 shapes — `gen` reports no valid free
+polyforms with five squares and one octagon at this Archimedean
+grid; recorded in the CSV.)
+
+### Findings
+
+1. **Octasquare is much "denser" than bevelhex.** Hc = 1 rate
+   is 40/463 = 8.6 % vs bevelhex's 35/9,427 = 0.37 %. Isohedral
+   tiler rate is 87/463 = 18.8 % vs bevelhex's 65/9,427 =
+   0.69 %. Most octasquare shapes are interesting (tile,
+   surround, or both); most bevelhex shapes are trivial
+   non-tilers.
+2. **(3, 3) is dominated by tilers.** 78 of 80 (3,3)
+   octasquares tile isohedrally. The other 2 are Hc = 0 and
+   Hc = 1.
+3. **No Hc ≥ 2 found through s + o = 6.** The 40 Hc = 1
+   shapes are catalogued at `results/m3.3-octasquare-hc1.txt`,
+   one per line in `gen` output format with `o` prefix
+   (lowercase, octasquare's grid abbreviation in upstream
+   tileio.h).
+4. **Wall scales gently.** The hardest single (s, o) was
+   (2, 3) with 36 shapes and 0.65 s. (2, 4) had 164 shapes
+   and 0.29 s. The 6-cell sweep finished in well under a
+   second total — extending to s + o ≤ 8 or 10 is a few-
+   minute job, well within an interactive session.
+
+### Bevelhex vs octasquare: comparison
+
+| metric                | bevelhex (M3.1) | octasquare (M3.3) |
+|-----------------------|----------------:|------------------:|
+| size sweep            | n ∈ {4, …, 7}    | s + o ∈ {2, …, 6} |
+| total shapes          |           9,427 |               463 |
+| Hc = 0                |   9,320 (98.9 %) |       336 (72.6 %) |
+| Hc = 1                |        35 (0.37 %) |        40 (8.6 %) |
+| Hc ≥ 2                |               0 |                 0 |
+| isohedral             |        65 (0.69 %) |        87 (18.8 %) |
+| inconclusive          |        7 (0.07 %) |                 0 |
+
+The two grids differ qualitatively. Octasquare's local geometry
+(square + octagon, with each square sandwiched between octagons)
+admits many more isohedral-tiling configurations and
+correspondingly fewer pure non-tilers per shape. Bevelhex's
+local geometry (the 4.6.12 vertex configuration is mixed) is
+much less "tiling-friendly" at small sizes.
+
+Neither grid has produced an Hc ≥ 2 shape yet. The Kaplan-2022
+polyomino catalogue's first Hc = 2 entries are at n = 11; if
+analogous behaviour holds on these grids, Hc ≥ 2 octasquares
+might appear around s + o = 7–10 and Hc ≥ 2 bevelhex polyforms
+around n = 8–12. Pushing the sweep to those sizes is M3.2
+(bevelhex) and a corresponding extension of M3.3 (octasquare).
 
 ## What's next under M3
 

@@ -1,0 +1,46 @@
+=== octasquare squares=1 octagons=2 (total=3): Hc=1 shapes ===
+o 0 0 1 0 0 1
+o 0 0 0 1 1 2
+=== octasquare squares=2 octagons=1 (total=3): Hc=1 shapes ===
+o 0 0 0 1 1 1
+=== octasquare squares=2 octagons=3 (total=5): Hc=1 shapes ===
+o 2 -1 0 0 1 0 0 1 0 2
+o 0 0 1 0 0 1 0 2 0 3
+o 0 0 1 0 0 1 1 1 1 2
+o 1 -1 2 -1 0 0 1 0 0 1
+o 1 -1 0 0 1 0 0 1 2 1
+o 1 -2 1 -1 0 0 1 0 0 1
+o 2 -2 2 -1 0 0 1 0 0 1
+o 2 -1 3 -1 0 0 1 0 0 1
+o 0 0 0 1 0 2 1 2 0 3
+o 0 0 0 1 0 2 0 3 1 4
+o 0 0 0 1 1 1 2 1 1 2
+o 0 0 0 1 1 1 1 2 0 3
+o 0 0 0 1 1 1 1 2 2 3
+o 0 0 0 1 1 1 2 1 3 2
+o 0 0 0 1 1 2 0 3 1 3
+o 0 0 0 1 1 2 1 3 1 4
+o 1 -2 1 -1 0 0 1 0 2 1
+o 1 -2 2 -1 0 0 1 0 1 1
+=== octasquare squares=3 octagons=2 (total=5): Hc=1 shapes ===
+o 0 0 1 0 0 1 1 1 0 2
+o 1 -1 0 0 1 0 0 1 0 2
+o 1 -1 0 0 1 0 2 0 0 1
+o 0 0 0 1 1 1 0 2 0 3
+o 0 0 0 1 0 2 0 3 1 3
+o 0 0 0 1 1 1 1 2 2 2
+o 0 0 0 1 1 2 2 2 1 3
+=== octasquare squares=2 octagons=4 (total=6): Hc=1 shapes ===
+o 1 -1 0 0 1 0 0 1 1 2 2 3
+o 2 -2 2 -1 0 0 1 0 0 1 1 2
+o 1 -1 0 0 1 0 0 1 2 1 3 2
+o 0 0 0 1 0 2 1 2 0 3 1 4
+o 0 0 0 1 1 1 2 1 1 2 3 2
+o 0 0 0 1 1 1 1 2 2 3 1 4
+o 0 0 0 1 1 1 1 2 2 3 3 4
+o 0 0 0 1 1 1 2 1 3 2 2 3
+o 1 -2 1 -1 2 -1 0 0 1 0 2 1
+o 3 -2 1 -1 2 -1 0 0 1 0 2 1
+o 2 -3 1 -2 2 -1 0 0 1 0 1 1
+=== octasquare squares=3 octagons=3 (total=6): Hc=1 shapes ===
+o 3 -1 0 0 3 0 0 1 1 1 2 1
