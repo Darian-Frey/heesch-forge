@@ -46,6 +46,10 @@ src/corona/test_corona
 
 # M2.4 hybrid harness binary.
 benchmarks/hybrid/run_hybrid
+
+# M3.1 bevelhex sweep intermediates -- regenerable from the script.
+benchmarks/lateral/results/bvh_n*.in
+benchmarks/lateral/results/bvh_n*.out
 src/sat/src/surrounds
 src/sat/src/report
 

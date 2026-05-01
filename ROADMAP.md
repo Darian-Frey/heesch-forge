@@ -10,14 +10,14 @@ This document tracks phases, gates, and current status. The proposal in `PROPOSA
 
 ## Phase status overview
 
-*Updated 2026-05-01: **Phase 2 closed** via the M2.7 engineering paper draft. M2.4 stays partial; M2.6-followup (bounded-DLX + SAT partial-state seed) is the load-bearing open item. Phase 1 closed; Phase 4 unblocked, proceeds with v1 CMSat as the integer-Hc reward oracle.*
+*Updated 2026-05-01: Phase 2 closed via M2.7. **Phase 3 opened with M3.1** (bevelhex code verified, 9,427 shapes classified at sizes 4–7, no Hc ≥ 2 found). M2.6-followup (bounded-DLX + SAT partial-state seed) and Phase 4 (RL pilot) are the load-bearing open items. Phase 1 closed.*
 
 | Phase | Layers | Status | Target completion |
 |-------|--------|--------|-------------------|
 | 0 — Setup | — | ✅ done (6/6) | met |
 | 1 — Engineering | L1 | ✅ closed (negative result; M1.2b deferred) | retrospective shipped |
 | 2 — Hybrid solver | L2 | ✅ closed (6/7; M2.4 partial; bounded-joint deferred) | retrospective shipped |
-| 3 — Lateral grids | L4 | ⚪ not started | parallel from Phase 2 |
+| 3 — Lateral grids | L4 | 🟢 active (1/5) | parallel from Phase 2 |
 | 4 — RL pilot | L3 | ⚪ not started | +28 weeks |
 | 5 — RL scale | L3 | ⚪ not started | +40 weeks |
 | 6 — Theory | L5 | ⚪ continuous from Phase 1 | +52 weeks |
@@ -96,7 +96,7 @@ Demonstrable order-of-magnitude speedup on inner coronas (depth 1, 2) and no slo
 
 ### Milestones
 
-- [ ] M3.1 — Verify Kaplan's bevelhex grid generation code; fix bugs if found.
+- [x] M3.1 — Bevelhex generation + classification verified at sizes 4–7. Reproducible sweep at `benchmarks/lateral/run_bevelhex_sweep.sh`; canonical CSV at `benchmarks/lateral/results/m3.1-bevelhex-sweep.csv`. Total: **9,427 free bevelhex polyforms classified in 3.6 s wall** across n = 4 → 7 (49 / 255 / 1,327 / 7,796 shapes per size). Hc = 1 catalogued (5 / 11 / 3 / 16 shapes per size = 35 total, list at `results/m3.1-bevelhex-hc1.txt`); **no Hc ≥ 2 found yet** through n = 7. 65 isohedral tilers and 7 inconclusives at n = 6; sizes 4/5/7 had none. **No bugs found in upstream's bevelhex code** — M3.1's literal task is no-bugs-report. Full write-up at `benchmarks/lateral/README.md`. The "extend to n ≈ 12 to find Hc ≥ 2" investigation is M3.2's scope.
 - [ ] M3.2 — Enumerate bevelhex polyforms up to n_max ≈ 12 (revisit upper bound based on cost).
 - [ ] M3.3 — Enumerate octasquare polyforms similarly.
 - [ ] M3.4 — Tabulate analogues of Kaplan's H=4 catalogue.
@@ -200,6 +200,17 @@ When a planned file is created, move its row from this table into the "Live now"
 ---
 
 ## Status notes (latest first)
+
+**1 May 2026 (M3.1, Phase 3 opens).** Bevelhex (4.6.12 Archimedean) generation + classification verified on upstream's `gen -bevelhex` + `sat -isohedral -hh` pipeline. Reproducible sweep at `benchmarks/lateral/run_bevelhex_sweep.sh`; canonical CSV at `benchmarks/lateral/results/m3.1-bevelhex-sweep.csv`.
+
+| size | shapes | wall    | Hc = 0 | Hc = 1 | Hc = 2 | iso | inconc |
+|-----:|-------:|--------:|-------:|-------:|-------:|----:|-------:|
+|  4   |     49 |  0.021s |     44 |      5 |      0 |   0 |      0 |
+|  5   |    255 |  0.083s |    244 |     11 |      0 |   0 |      0 |
+|  6   |  1,327 |  2.504s |  1,252 |      3 |      0 |  65 |      7 |
+|  7   |  7,796 |  1.014s |  7,780 |     16 |      0 |   0 |      0 |
+
+**No bugs found in upstream's bevelhex code.** 35 Hc = 1 bevelhex polyforms catalogued at `results/m3.1-bevelhex-hc1.txt` (a small new dataset; Kaplan's published catalogue covers omino / hex / iamond only). No Hc ≥ 2 through n = 7 — extending the sweep to n = 8–12 is M3.2's scope. Full write-up at `benchmarks/lateral/README.md`. Phase-3 row promoted from "not started" to "active (1/5)".
 
 **1 May 2026 (M2.7, Phase 2 closes).** Phase-2 engineering paper draft at `paper/drafts/phase2-engineering-hybrid.md` (~600 lines). Pulls M2.1-M2.6 numbers and findings into one document with the Phase 1 + Phase 2 combined picture. Eight sections: abstract → background (Phase 1's encoding-bottleneck conclusion) → Phase-2 program → per-milestone results (M2.1 DLX, M2.2 oracle, M2.3 handoff, M2.4 partial, M2.5 scaling, M2.6 PoC) → the right architecture (bounded-DLX + SAT-seed) → cross-cutting analysis (task-class split, not depth-based) → combined Phase-1 / Phase-2 picture for PROPOSAL §5 layers → reproducibility + references.
 
