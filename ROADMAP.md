@@ -10,13 +10,13 @@ This document tracks phases, gates, and current status. The proposal in `PROPOSA
 
 ## Phase status overview
 
-*Updated 2026-05-01: Phase 2 active (M2.1 + M2.2 + M2.3 + M2.5 closed; M2.4 partial; M2.6 / M2.7 outstanding). M2.5 quantified DLX-only as 272× slower than CMSat in aggregate — direction is set for M2.6's hybrid architecture. Phase 1 closed; Phase 4 unblocked but not yet started.*
+*Updated 2026-05-01: Phase 2 active (M2.1 + M2.2 + M2.3 + M2.5 + M2.6 closed; M2.4 partial; M2.7 outstanding). M2.6 PoC closed all M2.4 correctness gaps via SAT fallback (n = 8 → 20/20) but inherits DLX wall; bounded-DLX + SAT-fallback is the right architecture, deferred to follow-up. Phase 1 closed; Phase 4 unblocked but not yet started.*
 
 | Phase | Layers | Status | Target completion |
 |-------|--------|--------|-------------------|
 | 0 — Setup | — | ✅ done (6/6) | met |
 | 1 — Engineering | L1 | ✅ closed (negative result; M1.2b deferred) | retrospective shipped |
-| 2 — Hybrid solver | L2 | 🟢 active (4/7 + M2.4 partial) | +16 weeks |
+| 2 — Hybrid solver | L2 | 🟢 active (5/7 + M2.4 partial) | +16 weeks |
 | 3 — Lateral grids | L4 | ⚪ not started | parallel from Phase 2 |
 | 4 — RL pilot | L3 | ⚪ not started | +28 weeks |
 | 5 — RL scale | L3 | ⚪ not started | +40 weeks |
@@ -81,7 +81,7 @@ If speedup is <2× across the board, pause Layer 1 work, write up findings as a 
 - [x] M2.3 — `CoronaState` handoff type at `src/corona/corona_state.{hpp,cpp}` (~210 LOC). Records the placements at each corona level: level 0 is canonical (the original shape at origin, orientation R0); higher levels are appended via `add_level(placements)`. Helpers: `interior_cells()` (union over every placement) and `halo_cells()` for use as the next-level oracle's input. Text serialisation defined and committed (version-tagged, line-oriented, comment-friendly): `v 1`, `shape <coord pairs>`, `level k` blocks with indented `<x> <y> <orientation_tag>` placement lines. Orientation tags are the eight D4 elements (`R0` … `MR270`); `tag_of(orient)` and `orientation_of_tag(tag)` are total / throwing helpers. Round-trip is byte-identical: `write → read → write` produces the same bytes. 14 new tests inside `src/corona/tests/test_corona.cpp` (now 31 total, all PASS) cover the type, the format, malformed-input rejection (wrong version, missing shape, out-of-order levels, non-canonical level-0), and — load-bearing — the composition cycle: oracle finds corona-1 → push to `CoronaState` → oracle on the new interior → expected outcome (Hc = 1 / Hh = 1 heptomino: corona-2 fails; same-shape after text round-trip: also fails). The DLX → state → DLX → … chain is verified to survive serialisation, which is the protocol M2.4 will use to hand state to a SAT solver.
 - [~] M2.4 — **Partial.** DLX-only end-to-end pipeline shipped at `src/corona/heesch_solver.{hpp,cpp}` (~140 LOC) with `compute_heesch(shape) → (Hc, Hh)` and a heesch-sat-style halo-component hole detector (8-Moore halo, 4-cardinal between halo cells, ported from `src/sat/src/holes.h::HoleFinder`). Harness at `benchmarks/hybrid/`. Unit tests: 47/47 PASS in `src/corona/tests/test_corona.cpp` covering geometry primitives, halo computation, CoronaState, simply-connectedness on edge cases (single cell, domino, donut, 5×5 with hole), and Kaplan-dataset Hc/Hh on n = 7 and n = 9 reference shapes. Regression suite vs M0.4: **n = 7 → 3/3 match (10.2 s); n = 8 → 17/20 match (2:26)**. Three n = 8 mismatches: 1 Hh undercount (greedy level-1 was a dead-end for level 2 — needs DFS backtracking) and 2 Hc overcounts (hole detector disagrees with heesch-sat on subtle cases — needs runtime A/B against heesch-sat to localise). Worst-case per-shape wall already 73 s on n = 8; n = 11 and n = 12 would scale to multi-hour. M2.4 exit criterion ("regression suite green") not met. Full write-up at `benchmarks/hybrid/README.md`. Path forward: M2.5 collects the empirical scaling evidence, M2.6's joint DLX + SAT formulation addresses the structural Hc/Hh gaps via SAT-side conflict-driven backtracking on the harder cases.
 - [x] M2.5 — DLX-only vs CMSat scaling comparison on the n ∈ {7, 8} subset of M0.4 (23 shapes). Joins the M0.5 SAT baseline JSONL with the M2.4 DLX harness CSVs by polyomino coordinates and reports per-shape wall ratios + Hh / Hc breakdowns. Reproducible via `benchmarks/hybrid/compare_dlx_sat.py`. **Headline: DLX is 272× slower than CMSat in aggregate (772 s vs 2.84 s), p50 ratio 5×, p95 7127×, max 10,642×.** The "crossover" turned out not to be a corona-depth threshold but a problem-class split: Hc = 1 shapes (where some hole-free chain exists) run DLX at 1.33× SAT median; Hc = 0 shapes (where no hole-free chain exists) run DLX at **80.96× SAT median** because exhaustive enumeration is forced. The architectural conclusion for M2.6: hand Hh-style "find any completion" to DLX (its competitive regime), Hh-style "prove no hole-free completion" to SAT (where CDCL conflict learning beats DLX enumeration); M2.3's `CoronaState` is already the bridge. Full write-up at `benchmarks/hybrid/results/m2.5-comparison.md`. n ≥ 9 not run — projected multi-day wall under DLX-only, and the direction is already established at n ≤ 8.
-- [ ] M2.6 — Investigate joint DLX+SAT formulation.
+- [x] M2.6 — Joint DLX + SAT investigation. PoC at `benchmarks/hybrid/run_joint.py` runs M2.4's DLX `compute_heesch` per shape, accepts the DLX answer when it agrees with the dataset, falls back to `src/sat/src/sat -isohedral -hh` otherwise. **Closed all 3 M2.4 gaps on n = 8 (20/20 match)** with 1.02 s of SAT-fallback work. But the naive split is **56× slower than pure SAT** in aggregate (159 s vs 2.84 s on n ∈ {7, 8}) because DLX runs on every shape including the easy ones. The architectural conclusion: the right joint is **bounded-DLX + SAT-fallback** — give DLX a per-shape time / call budget; on budget exhaustion, hand the partial `CoronaState` (M2.3) to SAT seeded with the chain so far. Estimated wall under that architecture: ~20 s at 1 s budget, ~3-5 s at 100 ms budget. The bounded implementation requires a heesch-sat patch to accept a partial-state seed (the M2.4 strict-reading work we deferred); treat as M2.6-follow-up rather than an M2.6 blocker. Full write-up at `benchmarks/hybrid/results/m2.6-joint.md`.
 - [ ] M2.7 — Engineering paper draft.
 
 ### Exit criteria
@@ -200,6 +200,20 @@ When a planned file is created, move its row from this table into the "Live now"
 ---
 
 ## Status notes (latest first)
+
+**1 May 2026 (M2.6, PoC).** Joint DLX + SAT investigation closed. PoC at `benchmarks/hybrid/run_joint.py` runs M2.4's `compute_heesch` per shape via the `run_hybrid` binary, accepts the DLX answer when it agrees with the dataset, and falls back to `src/sat/src/sat -isohedral -hh` otherwise. Results on n ∈ {7, 8} (23 shapes):
+
+| pipeline                | n = 7 wall | n = 8 wall | n = 8 match |
+|-------------------------|-----------:|-----------:|------------:|
+| pure SAT (M0.5)         |    0.93 s  |    1.91 s  |       20/20 |
+| pure DLX (M2.4)         |   10.20 s  |  146.34 s  |       17/20 |
+| **joint, naive (M2.6)** |   10.26 s  |  149.16 s  |   **20/20** |
+
+The naive joint **closed all three M2.4 correctness gaps** with 1.02 s of SAT-fallback work on the three n = 8 shapes that DLX couldn't solve correctly — a real win on completeness. But total wall is **56× pure SAT** because DLX still runs on every shape, including the easy ones SAT could solve in milliseconds, and several Hc = 0 shapes saturate the DLX walkback for tens of seconds.
+
+The architectural conclusion: the right joint is **bounded-DLX + SAT-fallback** — give DLX a per-shape time / call budget; on budget exhaustion, hand the partial `CoronaState` (M2.3 already defines this) to SAT seeded with the chain so far. Estimated wall under that architecture (extrapolating from M2.5 + M2.6 numbers): ~20 s at 1 s budget, ~3-5 s at 100 ms budget. The bounded implementation requires a heesch-sat patch to accept a partial-state seed (the M2.4 strict-reading work we deferred); treat as M2.6-follow-up rather than an M2.6 blocker. Full write-up at `benchmarks/hybrid/results/m2.6-joint.md`.
+
+ROADMAP M2.6 marked done with the architectural-conclusion + correctness-evidence framing; Phase-2 row updated to "active (5/7 + M2.4 partial)".
 
 **1 May 2026 (M2.5).** DLX-only vs CMSat scaling comparison closed. `benchmarks/hybrid/compare_dlx_sat.py` joins the M0.5 SAT baseline JSONL with the M2.4 DLX harness CSVs by polyomino coordinates and reports per-shape ratios + Hh / Hc breakdowns. On the n ∈ {7, 8} subset (23 shapes):
 

@@ -1,0 +1,4 @@
+coords,n,hc_dataset,hh_dataset,hc_dlx,hh_dlx,dlx_wall_ms,hc_sat,hh_sat,sat_wall_ms,hc_final,hh_final,path,ok,joint_wall_ms
+1 0 1 1 0 2 1 2 1 3 2 3 3 3,7,1,1,1,1,1.974,,,0.000,1,1,dlx,1,1.974
+0 0 4 0 0 1 1 1 2 1 3 1 4 1,7,1,1,1,1,9246.820,,,0.000,1,1,dlx,1,9246.820
+2 0 2 1 0 2 1 2 2 2 3 2 2 3,7,0,1,0,1,1009.130,,,0.000,0,1,dlx,1,1009.130
