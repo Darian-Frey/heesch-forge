@@ -5,6 +5,7 @@
 // in the Kaplan dataset (paper/lit/bibtex.bib KaplanA8).
 
 #include "../corona_state.hpp"
+#include "../heesch_solver.hpp"
 #include "../oracle.hpp"
 
 #include <algorithm>
@@ -22,8 +23,11 @@ using ::heesch_forge::corona::all_orientations;
 using ::heesch_forge::corona::apply_orientation;
 using ::heesch_forge::corona::cell;
 using ::heesch_forge::corona::cell_set;
+using ::heesch_forge::corona::compute_heesch;
 using ::heesch_forge::corona::CoronaState;
 using ::heesch_forge::corona::halo_of;
+using ::heesch_forge::corona::HeeschResult;
+using ::heesch_forge::corona::is_simply_connected;
 using ::heesch_forge::corona::Oracle;
 using ::heesch_forge::corona::Orientation;
 using ::heesch_forge::corona::orientation_of_tag;
@@ -626,6 +630,124 @@ TEST( handoff_serialises_oracle_output_round_trip )
 	const bool ok = oracle.find_completion( parsed.interior_cells(),
 	                                          level_2 );
 	REQUIRE( !ok );
+	return true;
+}
+
+// ============================================================
+// 6. is_simply_connected helper (M2.4)
+// ============================================================
+
+TEST( simply_connected_empty_set )
+{
+	REQUIRE( is_simply_connected( cell_set {} ) );
+	return true;
+}
+
+TEST( simply_connected_single_cell )
+{
+	REQUIRE( is_simply_connected( cell_set { { 0, 0 } } ) );
+	return true;
+}
+
+TEST( simply_connected_horizontal_domino )
+{
+	REQUIRE( is_simply_connected( cell_set { { 0, 0 }, { 1, 0 } } ) );
+	return true;
+}
+
+TEST( simply_connected_two_by_two_square )
+{
+	REQUIRE( is_simply_connected( cell_set {
+		{ 0, 0 }, { 1, 0 }, { 0, 1 }, { 1, 1 }
+	} ) );
+	return true;
+}
+
+TEST( not_simply_connected_3x3_donut )
+{
+	// 3x3 square minus the centre: 8 cells around an enclosed empty
+	// cell. Must register as NOT simply connected.
+	cell_set donut;
+	for ( int x = 0; x < 3; ++x ) {
+		for ( int y = 0; y < 3; ++y ) {
+			if ( x == 1 && y == 1 ) continue;
+			donut.insert( { x, y } );
+		}
+	}
+	REQUIRE( !is_simply_connected( donut ) );
+	return true;
+}
+
+TEST( not_simply_connected_5x5_with_cross_hole )
+{
+	// 5x5 square minus one cell at (2, 2). Single enclosed hole.
+	cell_set s;
+	for ( int x = 0; x < 5; ++x ) {
+		for ( int y = 0; y < 5; ++y ) {
+			if ( x == 2 && y == 2 ) continue;
+			s.insert( { x, y } );
+		}
+	}
+	REQUIRE( !is_simply_connected( s ) );
+	return true;
+}
+
+// ============================================================
+// 7. compute_heesch end-to-end (M2.4)
+// ============================================================
+//
+// Reference values from data/kaplan-2022/omino/0[789]omino_0up.txt.
+// The DLX-only pipeline must reproduce the published Hc / Hh.
+
+TEST( compute_heesch_kaplan_n7_hc1_hh1 )
+{
+	const shape_cells shape =
+		parse_shape( "1 0 1 1 0 2 1 2 1 3 2 3 3 3" );
+	const HeeschResult r = compute_heesch( shape );
+	REQUIRE_EQ( r.hc, 1u );
+	REQUIRE_EQ( r.hh, 1u );
+	return true;
+}
+
+TEST( compute_heesch_kaplan_n7_hc0_hh1 )
+{
+	const shape_cells shape =
+		parse_shape( "2 0 2 1 0 2 1 2 2 2 3 2 2 3" );
+	const HeeschResult r = compute_heesch( shape );
+	REQUIRE_EQ( r.hc, 0u );
+	REQUIRE_EQ( r.hh, 1u );
+	return true;
+}
+
+TEST( compute_heesch_kaplan_n9_hc0_hh0 )
+{
+	const shape_cells shape =
+		parse_shape( "0 0 1 0 3 0 4 0 0 1 1 1 2 1 3 1 4 1" );
+	const HeeschResult r = compute_heesch( shape );
+	REQUIRE_EQ( r.hc, 0u );
+	REQUIRE_EQ( r.hh, 0u );
+	return true;
+}
+
+TEST( compute_heesch_records_diagnostics )
+{
+	const shape_cells shape =
+		parse_shape( "1 0 1 1 0 2 1 2 1 3 2 3 3 3" );
+	const HeeschResult r = compute_heesch( shape );
+	REQUIRE( r.oracle_calls >= 1u );
+	REQUIRE_EQ( r.depth_reached, r.hh + 1u );
+	return true;
+}
+
+TEST( compute_heesch_rejects_empty_shape )
+{
+	bool threw = false;
+	try {
+		(void)compute_heesch( shape_cells {} );
+	} catch ( const std::invalid_argument& ) {
+		threw = true;
+	}
+	REQUIRE( threw );
 	return true;
 }
 

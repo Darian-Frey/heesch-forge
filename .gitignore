@@ -43,6 +43,9 @@ src/dlx/test_dlx
 
 # M2.2 corona-oracle test binary (libcorona.a covered by `*.a`).
 src/corona/test_corona
+
+# M2.4 hybrid harness binary.
+benchmarks/hybrid/run_hybrid
 src/sat/src/surrounds
 src/sat/src/report
 

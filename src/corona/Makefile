@@ -12,7 +12,7 @@ CXXFLAGS = -std=c++20 -Wall -Wextra -Wpedantic -MMD $(OPT) -I.
 DLX_DIR     = ../dlx
 DLX_LIB     = $(DLX_DIR)/libdlx.a
 
-LIB_OBJECTS  = oracle.o corona_state.o
+LIB_OBJECTS  = oracle.o corona_state.o heesch_solver.o
 LIB_DEPENDS  = ${LIB_OBJECTS:.o=.d}
 
 TEST_OBJECTS = tests/test_corona.o

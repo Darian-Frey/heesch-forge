@@ -24,6 +24,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <set>
 #include <utility>
 #include <vector>
@@ -98,6 +99,16 @@ public:
 	// for sanity-checking unique-completion shapes and for benchmarking.
 	std::size_t count_completions( const cell_set& interior,
 	                               std::size_t cap = 0 );
+
+	// Enumerate completions, invoking `cb` once per solution with the
+	// list of placements. Returning false from the callback stops the
+	// search early. Returns the number of callback invocations made.
+	// Used by the M2.4 walkback to pick a simply-connected chain when
+	// the first completion DLX visits has enclosed holes.
+	using completion_callback =
+		std::function<bool( const std::vector<Placement>& )>;
+	std::size_t for_each_completion( const cell_set& interior,
+	                                  const completion_callback& cb );
 
 	// Diagnostic: number of candidate placements built for the most
 	// recent find_completion / count_completions call. (Equal to the

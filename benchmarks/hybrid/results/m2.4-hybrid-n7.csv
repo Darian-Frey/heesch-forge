@@ -1,0 +1,5 @@
+coords,n,hc_dataset,hh_dataset,hc_computed,hh_computed,ok,oracle_calls,wall_ms
+"1 0 1 1 0 2 1 2 1 3 2 3 3 3",7,1,1,0,1,0,3,2730.78
+"0 0 4 0 0 1 1 1 2 1 3 1 4 1",7,1,1,0,1,0,3,623055
+"2 0 2 1 0 2 1 2 2 2 3 2 2 3",7,0,1,0,1,1,3,297.659
+# ../../data/kaplan-2022/omino/07omino_0up.txt: 1/3 match, 2 mismatch

@@ -272,4 +272,32 @@ std::size_t Oracle::count_completions( const cell_set& interior,
 	return n;
 }
 
+std::size_t Oracle::for_each_completion( const cell_set& interior,
+                                          const completion_callback& cb )
+{
+	Matrix matrix;
+	if ( !plan_matrix( base_shape_, oriented_, interior, matrix ) ) {
+		last_candidates_ = matrix.candidates.size();
+		last_explored_   = 0;
+		return 0;
+	}
+	last_candidates_ = matrix.candidates.size();
+	dlx::Solver solver = build_solver( matrix );
+	std::size_t n = 0;
+	bool keep_going = true;
+	solver.solve( [&]( const dlx::Solver::solution& sol ) {
+		if ( !keep_going ) return false;
+		std::vector<Placement> placements;
+		placements.reserve( sol.size() );
+		for ( const auto rid : sol ) {
+			placements.push_back( matrix.candidates[rid].p );
+		}
+		++n;
+		keep_going = cb( placements );
+		return keep_going;
+	} );
+	last_explored_ = solver.nodes_explored();
+	return n;
+}
+
 } // namespace heesch_forge::corona
