@@ -10,7 +10,7 @@ This document tracks phases, gates, and current status. The proposal in `PROPOSA
 
 ## Phase status overview
 
-*Updated 2026-05-01: Phase 2 closed via M2.7. **Phase 3 closed via M3.5; M3.3-followup landed: 20 Hc = 2 octasquare polyforms at s + o ≥ 7 catalogued.** Both lateral grids now have non-trivial Heesch-number data — 2 Hc = 2 bevelhex (n = 9, 10) + 20 Hc = 2 octasquare (s + o = 7, 9, 10). M3.2-followup (bevelhex n = 11..12, compute-bound) and the (5, 5) s + o = 10 octasquare re-classification at higher maxlevel (49 inconclusives) are the remaining lateral-grid open items. M2.6-followup (bounded-DLX + SAT partial-state seed) and Phase 4 (RL pilot) are the load-bearing open items. Phase 1 closed.*
+*Updated 2026-05-02: Phase 2 closed via M2.7. **Phase 3 closed via M3.5; M3.3-followup landed (20 Hc = 2 octasquare polyforms at s + o ≥ 7 catalogued); M3.3-followup-2 landed (49 (5, 5) inconclusives re-classified at `-maxlevel 9` — all still inconclusive, no Hc ≥ 3 surfaced).** Both lateral grids now have explicit non-trivial Heesch-number data — 2 Hc = 2 bevelhex (n = 9, 10) + 20 Hc = 2 octasquare (s + o = 7, 9, 10). M3.2-followup (bevelhex n = 11..12, compute-bound) and the 49 octasquare inconclusives revisited at much deeper maxlevel are the remaining lateral-grid open items. M2.6-followup (bounded-DLX + SAT partial-state seed) and Phase 4 (RL pilot) are the load-bearing open items. Phase 1 closed.*
 
 | Phase | Layers | Status | Target completion |
 |-------|--------|--------|-------------------|
@@ -200,6 +200,10 @@ When a planned file is created, move its row from this table into the "Live now"
 ---
 
 ## Status notes (latest first)
+
+**2 May 2026 (M3.3-followup-2; (5, 5) maxlevel-9 re-pass — no Hc ≥ 3 surfaced).** The 49 octasquare inconclusives at (s, o) = (5, 5), s + o = 10 from the M3.3-followup default `-maxlevel 7` sweep were re-classified at `-maxlevel 9`. **17 min wall on this hardware; all 49 still inconclusive.** No Hc ≥ 3 octasquare polyform surfaced. The shapes neither resolved to definite Hc values nor were ruled out — sat could not construct (or rule out) a 3rd corona within 9 levels. The 49 are exhibiting unusual depth-resistance for sat's reachability-chain encoding; resolving them within the swept range would need either substantially deeper budget (maxlevel 11 or 13, estimated hours per shape) or a different solver strategy (the bounded-DLX + SAT seed pattern from M2.6 is one candidate). Inputs / outputs / runtime log committed at `benchmarks/lateral/results/oct_5_5_inconclusive_maxlevel9.{in,out,log}`. `M3.4-cross-grid-catalogue.md` and `benchmarks/lateral/README.md` updated.
+
+This closes the cheap-compute lateral-grid follow-ups for the (4.8.8) octasquare grid within the s + o ≤ 10 sweep range. Remaining lateral-grid open items: (a) M3.2-followup (bevelhex n = 11..12, ~25 min and ~2.5 h wall respectively) — which may surface the first known Hc ≥ 3 bevelhex; (b) the 49 (5, 5) inconclusives revisited at much higher maxlevel or with the bounded-DLX hybrid; (c) Phase 4 (RL pilot, M4.1).
 
 **2 May 2026 (M3.3-followup; first Hc = 2 octasquare polyforms).** Octasquare sweep extended from M3.3's s + o ≤ 6 (463 shapes) to s + o ≤ 10 (325,447 shapes; ~12 min wall). Reproducible at `benchmarks/lateral/run_octasquare_sweep.sh` with the (s, o) pairs through s + o = 10; canonical extended CSV at `benchmarks/lateral/results/m3.3-followup-octasquare-extended.csv`.
 

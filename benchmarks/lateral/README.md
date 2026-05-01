@@ -36,6 +36,11 @@ catalogue. Phase 3 produces one.
   **20 Hc = 2 octasquare polyforms discovered** at s + o = 7
   (smallest), 9, and 10. Catalogue at
   `results/m3.3-followup-octasquare-hc2.txt`.
+- **M3.3-followup-2 ((5, 5) maxlevel-9 re-pass)** — closed; the
+  49 inconclusives at s + o = 10 (5, 5) re-classified at
+  `-maxlevel 9` (17 min wall) **all remained inconclusive.** No
+  Hc ≥ 3 octasquare polyform surfaced. Inputs/outputs at
+  `results/oct_5_5_inconclusive_maxlevel9.{in,out,log}`.
 - **M3.4 (Hc = 4 catalogue analogue)** — closed; cross-grid
   table at `M3.4-cross-grid-catalogue.md`. Updated in light of
   the M3.3-followup to include octasquare's first-Hc = 2 size
