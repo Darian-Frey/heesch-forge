@@ -10,7 +10,7 @@ This document tracks phases, gates, and current status. The proposal in `PROPOSA
 
 ## Phase status overview
 
-*Updated 2026-05-01: Phase 2 closed via M2.7. **Phase 3 closed via M3.5** (short empirical paper at `paper/drafts/phase3-lateral-grids.md`; the 2 Hc = 2 bevelhex polyforms catalogued in M3.2 are the project's first publishable Heesch result on a non-Kaplan grid). M3.2-followup (bevelhex n = 11..12, compute-bound) and M3.3-followup (octasquare s + o ≥ 7) are open. M2.6-followup (bounded-DLX + SAT partial-state seed) and Phase 4 (RL pilot) are the load-bearing open items. Phase 1 closed.*
+*Updated 2026-05-01: Phase 2 closed via M2.7. **Phase 3 closed via M3.5; M3.3-followup landed: 20 Hc = 2 octasquare polyforms at s + o ≥ 7 catalogued.** Both lateral grids now have non-trivial Heesch-number data — 2 Hc = 2 bevelhex (n = 9, 10) + 20 Hc = 2 octasquare (s + o = 7, 9, 10). M3.2-followup (bevelhex n = 11..12, compute-bound) and the (5, 5) s + o = 10 octasquare re-classification at higher maxlevel (49 inconclusives) are the remaining lateral-grid open items. M2.6-followup (bounded-DLX + SAT partial-state seed) and Phase 4 (RL pilot) are the load-bearing open items. Phase 1 closed.*
 
 | Phase | Layers | Status | Target completion |
 |-------|--------|--------|-------------------|
@@ -200,6 +200,24 @@ When a planned file is created, move its row from this table into the "Live now"
 ---
 
 ## Status notes (latest first)
+
+**2 May 2026 (M3.3-followup; first Hc = 2 octasquare polyforms).** Octasquare sweep extended from M3.3's s + o ≤ 6 (463 shapes) to s + o ≤ 10 (325,447 shapes; ~12 min wall). Reproducible at `benchmarks/lateral/run_octasquare_sweep.sh` with the (s, o) pairs through s + o = 10; canonical extended CSV at `benchmarks/lateral/results/m3.3-followup-octasquare-extended.csv`.
+
+**Twenty Hc = 2 octasquare polyforms found**, smallest at s + o = 7:
+
+| s + o | (s, o) pair | Hc = 2 count |
+|------:|:-----------:|-------------:|
+| 7     | (3, 4)      |      4 |
+| 7     | (4, 3)      |      2 |
+| 9     | (4, 5)      |      5 |
+| 9     | (5, 4)      |      8 |
+| 10    | (5, 5)      |      1 |
+
+Catalogue committed at `benchmarks/lateral/results/m3.3-followup-octasquare-hc2.txt`. **Both lateral grids now have explicit Hc = 2 catalogues** — 2 bevelhex shapes from M3.2 and 20 octasquare shapes from this followup.
+
+**No Hc ≥ 3 octasquare found through s + o = 10**, but the (5, 5) s + o = 10 pair has **49 inconclusives** at the default `-maxlevel 7` — re-classifying that one pair with `-maxlevel 9` is a few-minute follow-up that may surface the first known Hc ≥ 3 octasquare polyform.
+
+`benchmarks/lateral/M3.4-cross-grid-catalogue.md` updated: octasquare row's first-Hc = 2 entry filled in (s + o = 7); the headline rank-ordering with bevelhex's first-Hc = 2 (n = 9) and the polyhex / polyiamond / polyomino reference entries now stands as a five-grid table.
 
 **1 May 2026 (M3.5, Phase 3 closes).** Phase-3 short empirical paper drafted at `paper/drafts/phase3-lateral-grids.md` (~600 lines, eight sections following the Phase-1 + Phase-2 retrospective pattern: abstract → background → method → results → cross-grid analysis → open questions → what the report does NOT claim → reproducibility + references).
 

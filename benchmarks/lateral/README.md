@@ -31,10 +31,15 @@ catalogue. Phase 3 produces one.
   `results/m3.2-bevelhex-hc2.txt` (2 shapes).
 - **M3.3 (octasquare sweep, s + o ≤ 6)** — closed; results in
   `results/m3.3-octasquare-sweep.csv`. Discussion below.
-- M3.4 (Hc = 4 catalogue analogue) — pending. With M3.2 having
-  produced Hc = 2 bevelhex shapes, the conditional ("verify
-  Hc = 4 analogue exists if Hc = 2 / 3 do") for M3.4 has its
-  first prerequisite.
+- **M3.3-followup (octasquare extension, s + o ≤ 10)** — closed;
+  results in `results/m3.3-followup-octasquare-extended.csv`.
+  **20 Hc = 2 octasquare polyforms discovered** at s + o = 7
+  (smallest), 9, and 10. Catalogue at
+  `results/m3.3-followup-octasquare-hc2.txt`.
+- **M3.4 (Hc = 4 catalogue analogue)** — closed; cross-grid
+  table at `M3.4-cross-grid-catalogue.md`. Updated in light of
+  the M3.3-followup to include octasquare's first-Hc = 2 size
+  at s + o = 7.
 
 ## M3.1 — bevelhex sweep, sizes 4–7
 
