@@ -1,0 +1,166 @@
+warning: `VIRTUAL_ENV=/home/azathoth/heesch-forge/.venv` does not match the project environment path `.venv` and will be ignored; use `--active` to target the active environment instead
+  gen   0  N= 200  elapsed= 64.6s  rmean= 0.040  rmax= 1.0  elite_mean=0.500  loss= 2.2070  unique_terminals=157
+  gen   1  N= 200  elapsed= 87.4s  rmean= 0.030  rmax= 1.0  elite_mean=0.350  loss= 2.1614  unique_terminals=165
+  gen   2  N= 200  elapsed=  3.9s  rmean= 0.010  rmax= 1.0  elite_mean=0.200  loss= 2.0989  unique_terminals=150
+  gen   3  N= 200  elapsed= 34.3s  rmean= 0.028  rmax= 1.0  elite_mean=0.300  loss= 2.1282  unique_terminals=151
+  gen   4  N= 200  elapsed= 64.6s  rmean= 0.043  rmax= 1.0  elite_mean=0.500  loss= 2.2028  unique_terminals=136
+  gen   5  N= 200  elapsed= 59.2s  rmean= 0.022  rmax= 1.0  elite_mean=0.250  loss= 2.1002  unique_terminals=150
+  gen   6  N= 200  elapsed= 33.6s  rmean= 0.015  rmax= 1.0  elite_mean=0.200  loss= 2.0913  unique_terminals=150
+  gen   7  N= 200  elapsed= 28.0s  rmean= 0.060  rmax= 1.0  elite_mean=0.600  loss= 2.2206  unique_terminals=150
+  gen   8  N= 200  elapsed=  4.2s  rmean= 0.035  rmax= 1.0  elite_mean=0.400  loss= 2.1416  unique_terminals=151
+  gen   9  N= 200  elapsed=  3.5s  rmean= 0.020  rmax= 1.0  elite_mean=0.300  loss= 2.1056  unique_terminals=138
+  gen  10  N= 200  elapsed=  3.5s  rmean= 0.033  rmax= 1.0  elite_mean=0.450  loss= 2.1753  unique_terminals=153
+  gen  11  N= 200  elapsed= 31.4s  rmean= 0.025  rmax= 1.0  elite_mean=0.350  loss= 2.1468  unique_terminals=141
+  gen  12  N= 200  elapsed=  3.1s  rmean= 0.028  rmax= 1.0  elite_mean=0.300  loss= 2.1159  unique_terminals=142
+  gen  13  N= 200  elapsed=  3.2s  rmean= 0.018  rmax= 1.0  elite_mean=0.250  loss= 2.0983  unique_terminals=146
+  gen  14  N= 200  elapsed=  3.9s  rmean= 0.052  rmax= 1.0  elite_mean=0.600  loss= 2.2167  unique_terminals=148
+{
+  "n_max": 10,
+  "n_min": 4,
+  "batch_size": 200,
+  "generations": 15,
+  "elite_fraction": 0.1,
+  "learning_rate": 0.001,
+  "seed": 0,
+  "oracle_cache_size": 1303,
+  "per_generation": [
+    {
+      "g": 0,
+      "elapsed_s": 64.618,
+      "rmean": 0.04,
+      "rmax": 1.0,
+      "elite_mean": 0.5,
+      "loss": 2.207,
+      "unique_terminals": 157
+    },
+    {
+      "g": 1,
+      "elapsed_s": 87.429,
+      "rmean": 0.03,
+      "rmax": 1.0,
+      "elite_mean": 0.35,
+      "loss": 2.1614,
+      "unique_terminals": 165
+    },
+    {
+      "g": 2,
+      "elapsed_s": 3.935,
+      "rmean": 0.01,
+      "rmax": 1.0,
+      "elite_mean": 0.2,
+      "loss": 2.0989,
+      "unique_terminals": 150
+    },
+    {
+      "g": 3,
+      "elapsed_s": 34.336,
+      "rmean": 0.0275,
+      "rmax": 1.0,
+      "elite_mean": 0.3,
+      "loss": 2.1282,
+      "unique_terminals": 151
+    },
+    {
+      "g": 4,
+      "elapsed_s": 64.622,
+      "rmean": 0.0425,
+      "rmax": 1.0,
+      "elite_mean": 0.5,
+      "loss": 2.2028,
+      "unique_terminals": 136
+    },
+    {
+      "g": 5,
+      "elapsed_s": 59.173,
+      "rmean": 0.0225,
+      "rmax": 1.0,
+      "elite_mean": 0.25,
+      "loss": 2.1002,
+      "unique_terminals": 150
+    },
+    {
+      "g": 6,
+      "elapsed_s": 33.6,
+      "rmean": 0.015,
+      "rmax": 1.0,
+      "elite_mean": 0.2,
+      "loss": 2.0913,
+      "unique_terminals": 150
+    },
+    {
+      "g": 7,
+      "elapsed_s": 27.952,
+      "rmean": 0.06,
+      "rmax": 1.0,
+      "elite_mean": 0.6,
+      "loss": 2.2206,
+      "unique_terminals": 150
+    },
+    {
+      "g": 8,
+      "elapsed_s": 4.163,
+      "rmean": 0.035,
+      "rmax": 1.0,
+      "elite_mean": 0.4,
+      "loss": 2.1416,
+      "unique_terminals": 151
+    },
+    {
+      "g": 9,
+      "elapsed_s": 3.507,
+      "rmean": 0.02,
+      "rmax": 1.0,
+      "elite_mean": 0.3,
+      "loss": 2.1056,
+      "unique_terminals": 138
+    },
+    {
+      "g": 10,
+      "elapsed_s": 3.482,
+      "rmean": 0.0325,
+      "rmax": 1.0,
+      "elite_mean": 0.45,
+      "loss": 2.1753,
+      "unique_terminals": 153
+    },
+    {
+      "g": 11,
+      "elapsed_s": 31.388,
+      "rmean": 0.025,
+      "rmax": 1.0,
+      "elite_mean": 0.35,
+      "loss": 2.1468,
+      "unique_terminals": 141
+    },
+    {
+      "g": 12,
+      "elapsed_s": 3.102,
+      "rmean": 0.0275,
+      "rmax": 1.0,
+      "elite_mean": 0.3,
+      "loss": 2.1159,
+      "unique_terminals": 142
+    },
+    {
+      "g": 13,
+      "elapsed_s": 3.201,
+      "rmean": 0.0175,
+      "rmax": 1.0,
+      "elite_mean": 0.25,
+      "loss": 2.0983,
+      "unique_terminals": 146
+    },
+    {
+      "g": 14,
+      "elapsed_s": 3.89,
+      "rmean": 0.0525,
+      "rmax": 1.0,
+      "elite_mean": 0.6,
+      "loss": 2.2167,
+      "unique_terminals": 148
+    }
+  ],
+  "discovered_counts": {
+    "1.0": 111
+  }
+}
