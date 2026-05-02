@@ -201,6 +201,16 @@ When a planned file is created, move its row from this table into the "Live now"
 
 ## Status notes (latest first)
 
+**2 May 2026 (M2.6-followup-B session 1 — attempted, reverted).** Tried the per-cell-per-level coverage variable refactor that M1.5 prescribed. Added `coverage_vars_` map, `getCoverageVariable(p, level)` accessor, rewrote Blocks B/C/D in `getClauses` to use the new vars, added a pre-pass to allocate before clauses are emitted. Caught and fixed a bug along the way (`solv.new_vars(n)` adds n more vars, it does not set the count to n).
+
+The resulting encoding **breaks Hh detection** on 152 of 174 shapes in the M0.4 regression (n ≤ 12). The failure pattern is consistent: `dataset Hh = 2 → sat returns (Hc, 1)`. The smallest reproducer is the n = 8 shape `1 0 2 0 1 1 0 2 1 2 1 3 2 3 3 3` — original encoding gives `~ 1 2 0`; the refactor gives `~ 1 1 0`.
+
+The likely culprit is **Block C tightening**: the original's `cell_var[c] → ∨_t ∨_{any level} tile[t, level]` allows a covered cell to be satisfied by any tile at any level; my per-level rewrite `coverage[c, k] → ∨_t tile[t, k]` requires a same-level tile. In principle Block E (no overlap) plus Block F (adjacency) should make these equivalent, but in practice Hh's culled-adjacency code path breaks under the per-level form. Investigation deferred — the reproducer is small and mechanical, but the time was over the session-1 budget. Revert: heesch.h restored to its M2.6-followup-A state via `git checkout HEAD --`; all 174 M0.4 shapes re-match.
+
+**Lessons recorded** at `benchmarks/maxsat/M2.6-followup-B-attempt.md` (this file is the only artefact committed from the attempt, for the historical record). Session 2 should pick one of three approaches: (1) keep per-cell `cell_var` and ADD `coverage[c, k]` as parallel softs-only variables, (2) keep Block C global and rewrite only Block D per-level, or (3) build two solvers side by side and dump CNFs to identify the missing clause. (3) is recommended before committing to (1) or (2) — the reproducer is small and the comparison is mechanical.
+
+The Phase-4 dependency chain remains: M4.5 → M4.4 → M2.6-followup-B (still open). M2.6-followup-A unblocked the Phase-2 hybrid story end-to-end and is unaffected by this attempt; M2.6-followup-B remains the load-bearing open milestone for M4.4.
+
 **2 May 2026 (M2.6-followup-A; bounded-DLX + SAT partial-state seed).** Phase-2 Layer-2's open follow-up — the implementation that makes the M2.7 "task-class-based hybrid" architecture actually run fast — landed. Five concrete pieces on `main`:
 
 1. DLX node-count budget at `src/dlx/dlx.{hpp,cpp}` (`set_node_budget`, `last_budget_exhausted`); 18 prior tests pass.
