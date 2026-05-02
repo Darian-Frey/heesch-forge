@@ -10,7 +10,7 @@ This document tracks phases, gates, and current status. The proposal in `PROPOSA
 
 ## Phase status overview
 
-*Updated 2026-05-02: Phase 2 closed via M2.7. **Phase 3 closed via M3.5; M3.3-followup landed (20 Hc = 2 octasquare polyforms at s + o ≥ 7 catalogued); M3.3-followup-2 landed (49 (5, 5) inconclusives re-classified at `-maxlevel 9` — all still inconclusive, no Hc ≥ 3 surfaced).** Both lateral grids now have explicit non-trivial Heesch-number data — 2 Hc = 2 bevelhex (n = 9, 10) + 20 Hc = 2 octasquare (s + o = 7, 9, 10). M3.2-followup (bevelhex n = 11..12, compute-bound) and the 49 octasquare inconclusives revisited at much deeper maxlevel are the remaining lateral-grid open items. M2.6-followup (bounded-DLX + SAT partial-state seed) and Phase 4 (RL pilot) are the load-bearing open items. Phase 1 closed.*
+*Updated 2026-05-02: Phase 2 closed via M2.7. **Phase 3 closed via M3.5; M3.3-followup landed (20 Hc = 2 octasquare polyforms at s + o ≥ 7 catalogued); M3.3-followup-2 landed (49 (5, 5) inconclusives re-classified at `-maxlevel 9` — all still inconclusive, no Hc ≥ 3 surfaced); M3.2-followup landed (bevelhex n = 11 swept after upstream bitgrid bumped <128>→<256>; 1 new Hc = 2, no Hc = 3).** Both lateral grids now have explicit non-trivial Heesch-number data — **3 Hc = 2 bevelhex (n = 9, 10, 11)** + 20 Hc = 2 octasquare (s + o = 7, 9, 10). Bevelhex n = 12 (~4–6 h wall) and the 49 octasquare inconclusives revisited at much deeper maxlevel are the remaining compute-bound lateral-grid open items. M2.6-followup (bounded-DLX + SAT partial-state seed) and Phase 4 (RL pilot) are the load-bearing open items. Phase 1 closed.*
 
 | Phase | Layers | Status | Target completion |
 |-------|--------|--------|-------------------|
@@ -200,6 +200,16 @@ When a planned file is created, move its row from this table into the "Live now"
 ---
 
 ## Status notes (latest first)
+
+**2 May 2026 (M3.2-followup; bevelhex n = 11 — 1 new Hc = 2, no Hc = 3, upstream bitgrid bumped).** Bevelhex sweep extended to n = 11. `gen -bevelhex -size 11 -free` produces **10,472,378 free polyforms** (≈ 6× more than n = 10's 1,697,278). Naïve `sat -isohedral -hh` crashed at shape 1,638,358 with `Coordinate out of range in bitgrid` — upstream's stock `bitgrid<128>` (radius 64) does not accommodate the corona expansions of the larger bevelhex shapes at this size. Patch: bumped `using bitgrid_t = bitgrid<128>` to `<256>` in `src/sat/src/cloud.h` and `src/sat/src/surrounds.cpp` (~10× memory per slot, still ~8 KB; load-bearing for any bevelhex sweep at n ≥ 11).
+
+Patched binary processed all 10,472,378 shapes in **24:50 wall** with no crashes, no inconclusives, no isohedral. Distribution: **10,472,048 Hc = 0; 329 Hc = 1; 1 Hc = 2; 0 Hc ≥ 3.** The new Hc = 2 polyform brings the bevelhex Hc = 2 catalogue to 3 entries (n = 9, 10, 11):
+
+```text
+n = 11:  B  9 -3   3  0   6  0   2  2   6  3   9  3   4  4   3  6   6  6   2  8   6  9
+```
+
+Catalogue at `benchmarks/lateral/results/m3.2-bevelhex-hc2.txt`. Per-size CSV at `benchmarks/lateral/results/m3.2-followup-bevelhex-n11.csv`. **No Hc = 3 bevelhex polyform found through n = 11.** `M3.4-cross-grid-catalogue.md` and `benchmarks/lateral/README.md` updated. The next compute-bound bevelhex extension is n = 12 (estimated 4–6 h wall on this hardware given n = 11's per-shape rate).
 
 **2 May 2026 (M3.3-followup-2; (5, 5) maxlevel-9 re-pass — no Hc ≥ 3 surfaced).** The 49 octasquare inconclusives at (s, o) = (5, 5), s + o = 10 from the M3.3-followup default `-maxlevel 7` sweep were re-classified at `-maxlevel 9`. **17 min wall on this hardware; all 49 still inconclusive.** No Hc ≥ 3 octasquare polyform surfaced. The shapes neither resolved to definite Hc values nor were ruled out — sat could not construct (or rule out) a 3rd corona within 9 levels. The 49 are exhibiting unusual depth-resistance for sat's reachability-chain encoding; resolving them within the swept range would need either substantially deeper budget (maxlevel 11 or 13, estimated hours per shape) or a different solver strategy (the bounded-DLX + SAT seed pattern from M2.6 is one candidate). Inputs / outputs / runtime log committed at `benchmarks/lateral/results/oct_5_5_inconclusive_maxlevel9.{in,out,log}`. `M3.4-cross-grid-catalogue.md` and `benchmarks/lateral/README.md` updated.
 

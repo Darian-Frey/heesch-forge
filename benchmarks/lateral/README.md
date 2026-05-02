@@ -28,7 +28,15 @@ catalogue. Phase 3 produces one.
   project's first non-trivial Heesch-number result on a
   non-omino / non-hex / non-iamond grid. Catalogues at
   `results/m3.2-bevelhex-hc1.txt` (315 shapes) and
-  `results/m3.2-bevelhex-hc2.txt` (2 shapes).
+  `results/m3.2-bevelhex-hc2.txt` (3 shapes; n = 11 entry
+  added by M3.2-followup).
+- **M3.2-followup (bevelhex n = 11)** — closed;
+  10,472,378 shapes classified in 24:50 wall after patching
+  upstream `bitgrid<128>` → `<256>` (cloud.h, surrounds.cpp).
+  **1 new Hc = 2 polyform found** (n = 11; bringing the
+  bevelhex Hc = 2 catalogue to 3). **No Hc = 3 found.** Per-size
+  CSV at `results/m3.2-followup-bevelhex-n11.csv`; runtime log
+  at `results/m3.2-followup-bevelhex-n11.log`.
 - **M3.3 (octasquare sweep, s + o ≤ 6)** — closed; results in
   `results/m3.3-octasquare-sweep.csv`. Discussion below.
 - **M3.3-followup (octasquare extension, s + o ≤ 10)** — closed;

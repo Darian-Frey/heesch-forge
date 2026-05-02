@@ -69,7 +69,9 @@ static bool computeSurrounds(TileInfo<grid> & tile)
 	using coord_t = typename grid::coord_t;
 	using point_t = typename grid::point_t;
 	using xform_t = typename grid::xform_t;
-	using bitgrid_t = bitgrid<128>;
+	// M3.2-followup (heesch-forge): bumped from bitgrid<128> to <256> so
+	// bevelhex n>=11 corona expansions (which can exceed coord 64) fit.
+	using bitgrid_t = bitgrid<256>;
 
 	Cloud<grid> cloud {tile.getShape(), ori, true, reduce};
 	// FIXME -- could abort early here if cloud reports that the
