@@ -10,7 +10,7 @@ This document tracks phases, gates, and current status. The proposal in `PROPOSA
 
 ## Phase status overview
 
-*Updated 2026-05-02: Phase 2 closed via M2.7. **Phase 3 closed via M3.5; M3.3-followup landed (20 Hc = 2 octasquare polyforms at s + o ≥ 7 catalogued); M3.3-followup-2 landed (49 (5, 5) inconclusives re-classified at `-maxlevel 9` — all still inconclusive, no Hc ≥ 3 surfaced); M3.2-followup landed (bevelhex n = 11 swept after upstream bitgrid bumped <128>→<256>; 1 new Hc = 2, no Hc = 3).** Both lateral grids now have explicit non-trivial Heesch-number data — **3 Hc = 2 bevelhex (n = 9, 10, 11)** + 20 Hc = 2 octasquare (s + o = 7, 9, 10). Bevelhex n = 12 (~4–6 h wall) and the 49 octasquare inconclusives revisited at much deeper maxlevel are the remaining compute-bound lateral-grid open items. M2.6-followup (bounded-DLX + SAT partial-state seed) and Phase 4 (RL pilot) are the load-bearing open items. Phase 1 closed.*
+*Updated 2026-05-02: Phase 2 closed via M2.7. **Phase 3 closed via M3.5; M3.3-followup landed (20 Hc = 2 octasquare polyforms at s + o ≥ 7 catalogued); M3.3-followup-2 landed (49 (5, 5) inconclusives re-classified at `-maxlevel 9` — all still inconclusive, no Hc ≥ 3 surfaced); M3.2-followup landed (bevelhex n = 11 swept after upstream bitgrid bumped <128>→<256>; 1 new Hc = 2, no Hc = 3); M4.1 landed (Phase-4 RL pilot MDP defined; M4.2 unblocked).** Both lateral grids now have explicit non-trivial Heesch-number data — **3 Hc = 2 bevelhex (n = 9, 10, 11)** + 20 Hc = 2 octasquare (s + o = 7, 9, 10). Bevelhex n = 12 (~4–6 h wall) and the 49 octasquare inconclusives revisited at much deeper maxlevel are the remaining compute-bound lateral-grid open items. M2.6-followup (bounded-DLX + SAT partial-state seed) and Phase 4 (M4.2 GNN policy network) are the load-bearing open items. Phase 1 closed.*
 
 | Phase | Layers | Status | Target completion |
 |-------|--------|--------|-------------------|
@@ -114,7 +114,7 @@ Smallest n with H=k catalogued for both grids, k ∈ {1, 2, 3, 4(+)}.
 
 ### Milestones
 
-- [ ] M4.1 — Define MDP: state encoding, action space, episode termination.
+- [x] M4.1 — Define MDP: state encoding, action space, episode termination. Document at `benchmarks/rl/M4.1-mdp.md` (~360 lines, ten sections). Locks four axes for Wagner-style deep-cross-entropy: (1) state = canonical-form polyomino + observation as 4-cardinal cell-adjacency graph with 6 per-cell features (xy, is_boundary, boundary_degree, is_corner, n_normalised); (2) action = `Add(x,y)` over `legal_add_positions` ∪ `{Stop}`, add-only by default with square-removal flagged as decision-gate fallback; (3) reward = sparse terminal *H_c* from v1 CMSat solver, with -0.5 for hole / disconnected and -1 for under-floor — MaxSAT dense reward deferred to M4.4 pending M2.6-followup encoding refactor; (4) termination on Stop / `n_max` / invalid-state. D₄ symmetry handled by replay-time augmentation (Wagner's approach), not equivariant network. Validation contract for M4.5: rediscover all Kaplan H ≥ 2 polyominoes at n ≤ 12 within budget B = 10⁵ trajectories. Deferred-decisions table makes M4.2 / M4.3 / M4.4 boundaries explicit. M4.2 (GNN policy network) is unblocked.
 - [ ] M4.2 — GNN policy network (PyTorch Geometric); baseline random-policy reward distribution.
 - [ ] M4.3 — Implement deep cross-entropy training loop (Wagner 2021).
 - [ ] M4.4 — Reward = MaxSAT-derived score from Layer-1+2 solver.
@@ -200,6 +200,17 @@ When a planned file is created, move its row from this table into the "Live now"
 ---
 
 ## Status notes (latest first)
+
+**2 May 2026 (M4.1; Phase-4 RL pilot MDP defined).** Phase-4 RL pilot's MDP design is committed at `benchmarks/rl/M4.1-mdp.md` (~360 lines, ten sections). PROPOSAL §5 Layer 3 promised Wagner-style (arXiv:2104.14516) deep cross-entropy over polyomino construction; M4.1 locks the four axes that contract gives the next milestones:
+
+- **State.** Canonical-form polyomino (D₄-canonical, lex-smallest representative). Observation passed to the GNN is a graph: cells as nodes, 4-cardinal cell-adjacency as edges, six per-cell features (xy after canonicalisation, is_boundary, boundary_degree, is_corner, n_normalised). Edge features deferred to M4.2 ablations.
+- **Action.** `Add(x, y)` for `(x, y) ∈ legal_add_positions` ∪ `{Stop}`. Variable-length action space realised as a per-boundary-node logit + one stop-logit. **Add-only by default**; square removal flagged as decision-gate fallback only.
+- **Reward.** Sparse terminal *H_c* from the v1 CMSat solver (M0.5 baseline). −0.5 for hole-introducing / disconnected; −1 for under-floor termination. **MaxSAT-derived dense reward deferred to M4.4** pending the encoding refactor M1.5 surfaced; this swap is a single-function change, not an MDP redesign.
+- **Termination.** Stop action, or `|cells| == n_max`, or invalid state. `n_max = 12` for the M4.5 pilot, escalating to 17 at M4.6.
+- **Symmetry.** D₄ data augmentation at experience replay (Wagner's approach). Trajectories stored in canonical form; minibatch sampler applies a random D₄ element. Network is **not** equivariant by construction.
+- **Validation contract for M4.5.** Rediscover every Kaplan H ≥ 2 polyomino at n ≤ 12 within trajectory budget B = 10⁵; report precision, recall, and per-shape first-discovery budget. Failure modes (mode-collapse / search-coverage / reward-signal) are distinguished operationally so M4.5 results route cleanly to either M4.2/M4.3 (architecture) or back to M4.1 (MDP redesign).
+
+Engineering hooks: `compute_hc_via_sat(cells)` is a subprocess to the patched `src/sat/src/sat`; `data/kaplan-2022/` is the validation set; local CPU is sufficient through M4.5. M4.2 (GNN policy network) is now unblocked. Updated `ROADMAP.md` Phase-4 milestone list to mark M4.1 closed.
 
 **2 May 2026 (M3.2-followup; bevelhex n = 11 — 1 new Hc = 2, no Hc = 3, upstream bitgrid bumped).** Bevelhex sweep extended to n = 11. `gen -bevelhex -size 11 -free` produces **10,472,378 free polyforms** (≈ 6× more than n = 10's 1,697,278). Naïve `sat -isohedral -hh` crashed at shape 1,638,358 with `Coordinate out of range in bitgrid` — upstream's stock `bitgrid<128>` (radius 64) does not accommodate the corona expansions of the larger bevelhex shapes at this size. Patch: bumped `using bitgrid_t = bitgrid<128>` to `<256>` in `src/sat/src/cloud.h` and `src/sat/src/surrounds.cpp` (~10× memory per slot, still ~8 KB; load-bearing for any bevelhex sweep at n ≥ 11).
 
