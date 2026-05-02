@@ -3,10 +3,16 @@
 #include <chrono>
 #include <fstream>
 #include <filesystem>
+#include <memory>
 
 #include "heesch.h"
 #include "grid.h"
 #include "tileio.h"
+
+// M2.6-followup-A: seed support. The bounded-DLX hybrid hands sat a
+// CoronaState file with already-completed corona levels; sat skips the
+// SAT solves for those levels and continues from the next one.
+#include "../../corona/corona_state.hpp"
 
 // Use a SAT solver to compute Heesch numbers of polyforms.
 
@@ -38,6 +44,36 @@ static const char *stats_name = nullptr;
 static ofstream stats_ofs;
 static ostream *stats_out = nullptr;
 
+// M2.6-followup-A: optional partial-corona seed. When -seed <file> is
+// given, sat parses the file as a CoronaState v1 (omino-only for now),
+// advances the solver to the seed's depth, registers the seed
+// placements as forced unit clauses, and continues SAT solving from
+// that depth onward. The seed must describe the same shape the input
+// stream has just one of.
+static const char *seed_name = nullptr;
+static std::unique_ptr<heesch_forge::corona::CoronaState> seed_state;
+
+// Map src/corona's Orientation enum -> OminoGrid orientations[] index.
+// See benchmarks/rl/M4.1-mdp.md / M2.3 -- the two libraries use
+// different conventions for "M" (corona = flip-y; OminoGrid = flip-x),
+// so the mapping is not the identity for indices 4..7.
+static int corona_orient_to_omino_index(
+	heesch_forge::corona::Orientation o )
+{
+	using O = heesch_forge::corona::Orientation;
+	switch ( o ) {
+		case O::R0:    return 0;
+		case O::R90:   return 1;
+		case O::R180:  return 2;
+		case O::R270:  return 3;
+		case O::M:     return 6;   // (x, -y)
+		case O::MR90:  return 7;   // (y, x)
+		case O::MR180: return 4;   // (-x, y)
+		case O::MR270: return 5;   // (-y, -x)
+	}
+	return 0;
+}
+
 template<typename grid>
 static bool computeHeesch(TileInfo<grid>& info)
 {
@@ -63,7 +99,54 @@ static bool computeHeesch(TileInfo<grid>& info)
 	solver.setCheckHoleCoronas(check_hh);
 
 	auto t0 = std::chrono::steady_clock::now();
-	solver.solve(show_solution, max_level, info);
+	if ( seed_state && grid::grid_type == OMINO
+		&& seed_state->depth() > 1 )
+	{
+		// Advance to seed depth and register placements.
+		const std::size_t seed_depth = seed_state->depth() - 1;
+		// depth() is the count of completed levels including level 0;
+		// level k for k >= 1 is the k-th corona.
+		bool seeded_ok = true;
+		for ( std::size_t k = 1; k <= seed_depth; ++k ) {
+			solver.increaseLevel();
+			for ( const auto& p : seed_state->level( k ) ) {
+				const int orient_idx =
+					corona_orient_to_omino_index( p.orient );
+				const auto& base =
+					OminoGrid<typename grid::coord_t>::orientations[orient_idx];
+				typename grid::xform_t T(
+					typename grid::coord_t( base.a_ ),
+					typename grid::coord_t( base.b_ ),
+					typename grid::coord_t( p.origin.first ),
+					typename grid::coord_t( base.d_ ),
+					typename grid::coord_t( base.e_ ),
+					typename grid::coord_t( p.origin.second ) );
+				if ( !solver.addSeedPlacement( T, k ) ) {
+					std::cerr << "warning: seed placement at level " << k
+						<< " not in adjacency list; ignoring seed and "
+						<< "falling back to plain solve()" << std::endl;
+					seeded_ok = false;
+					break;
+				}
+			}
+			if ( !seeded_ok ) {
+				break;
+			}
+		}
+		if ( seeded_ok ) {
+			solver.solveFromSeed( show_solution, seed_depth, max_level, info );
+		} else {
+			// Reset would be cleanest, but the solver has already
+			// advanced its level counter. Build a fresh one.
+			HeeschSolver<grid> fresh { info.getShape(), ori, reduce };
+			fresh.setCheckIsohedral( check_isohedral );
+			fresh.setCheckPeriodic( check_periodic );
+			fresh.setCheckHoleCoronas( check_hh );
+			fresh.solve( show_solution, max_level, info );
+		}
+	} else {
+		solver.solve( show_solution, max_level, info );
+	}
 	auto wall_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
 		std::chrono::steady_clock::now() - t0).count();
 
@@ -182,6 +265,9 @@ int main( int argc, char **argv )
 		} else if (!strcmp(argv[idx], "-stats")) {
 			++idx;
 			stats_name = argv[idx];
+		} else if (!strcmp(argv[idx], "-seed")) {
+			++idx;
+			seed_name = argv[idx];
 		} else if (!strcmp(argv[idx], "-maxlevel")) {
 		    ++idx;
 		    max_level = atoi(argv[idx]);
@@ -233,6 +319,17 @@ int main( int argc, char **argv )
 	if (stats_name) {
 		stats_ofs.open(stats_name);
 		stats_out = &stats_ofs;
+	}
+
+	if (seed_name) {
+		std::ifstream sin( seed_name );
+		if ( !sin ) {
+			std::cerr << "Failed to open seed file: " << seed_name
+				<< std::endl;
+			exit( 1 );
+		}
+		seed_state = std::make_unique<heesch_forge::corona::CoronaState>(
+			heesch_forge::corona::CoronaState::read( sin ) );
 	}
 
 	if (inname) {

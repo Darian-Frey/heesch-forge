@@ -2,7 +2,6 @@
 
 #include "heesch_solver.hpp"
 
-#include <algorithm>
 #include <queue>
 #include <stdexcept>
 #include <utility>
@@ -165,6 +164,120 @@ HeeschResult compute_heesch( const shape_cells& shape,
 		hh,
 		hh_state.depth(),
 		oracle_calls
+	};
+}
+
+// M2.6-followup-A: budgeted variant. See header for contract.
+//
+// The mechanics mirror compute_heesch but pass a node budget through
+// to the Oracle's underlying DLX. We track the deepest hole-free
+// `CoronaState` we successfully built; on budget exhaustion that's
+// what gets handed to sat -seed downstream.
+BoundedHeeschResult compute_heesch_bounded(
+	const shape_cells& shape,
+	std::size_t max_level,
+	std::size_t node_budget )
+{
+	if ( shape.empty() ) {
+		throw std::invalid_argument(
+			"compute_heesch_bounded: shape is empty" );
+	}
+
+	Oracle oracle { shape };
+	oracle.set_node_budget( node_budget );
+
+	std::size_t oracle_calls = 0;
+	std::size_t nodes_total = 0;
+
+	// Phase 1: greedy Hh chain.
+	CoronaState hh_state { shape };
+	bool exhausted = false;
+	while ( hh_state.depth() <= max_level ) {
+		std::vector<Placement> next;
+		++oracle_calls;
+		const bool found =
+			oracle.find_completion( hh_state.interior_cells(), next );
+		nodes_total += oracle.last_nodes_explored();
+		if ( oracle.last_budget_exhausted() ) {
+			exhausted = true;
+			break;
+		}
+		if ( !found ) {
+			break;
+		}
+		hh_state.add_level( std::move( next ) );
+	}
+
+	if ( exhausted ) {
+		// We don't have a definitive Hh; we have a hole-free
+		// CoronaState built up to whatever depth completed. Hand it
+		// to sat -seed for the rest.
+		return BoundedHeeschResult {
+			false,
+			HeeschResult { 0, 0, hh_state.depth(), oracle_calls },
+			std::optional<CoronaState> { hh_state },
+			oracle_calls,
+			nodes_total
+		};
+	}
+
+	const std::size_t hh = hh_state.depth() - 1;
+
+	// Phase 2: walkback for Hc, also budget-checked.
+	CoronaState hc_state { shape };
+	std::size_t hc = 0;
+	while ( hc_state.depth() <= max_level
+	     && hc_state.depth() <= hh ) {
+		std::vector<Placement> next;
+		++oracle_calls;
+		bool ok_completion = false;
+		oracle.for_each_completion( hc_state.interior_cells(),
+			[&]( const std::vector<Placement>& sol ) {
+				cell_set test = hc_state.interior_cells();
+				for ( const auto& p : sol ) {
+					for ( const auto& c : placed_cells(
+							oracle.base_shape(), p ) ) {
+						test.insert( c );
+					}
+				}
+				if ( is_simply_connected( test ) ) {
+					next = sol;
+					ok_completion = true;
+					return false;
+				}
+				return true;
+			} );
+		nodes_total += oracle.last_nodes_explored();
+		if ( oracle.last_budget_exhausted() ) {
+			exhausted = true;
+			break;
+		}
+		if ( !ok_completion ) {
+			break;
+		}
+		hc_state.add_level( std::move( next ) );
+		hc = hc_state.depth() - 1;
+	}
+
+	if ( exhausted ) {
+		// Hand the deepest hc-chain state to sat. Note this may be a
+		// shallower depth than the hh chain; the seed that travels to
+		// sat is the simply-connected one.
+		return BoundedHeeschResult {
+			false,
+			HeeschResult { hc, hh, hh_state.depth(), oracle_calls },
+			std::optional<CoronaState> { hc_state },
+			oracle_calls,
+			nodes_total
+		};
+	}
+
+	return BoundedHeeschResult {
+		true,
+		HeeschResult { hc, hh, hh_state.depth(), oracle_calls },
+		std::nullopt,
+		oracle_calls,
+		nodes_total
 	};
 }
 

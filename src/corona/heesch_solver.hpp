@@ -30,6 +30,7 @@
 #include "oracle.hpp"
 
 #include <cstddef>
+#include <optional>
 
 namespace heesch_forge::corona {
 
@@ -49,5 +50,30 @@ bool is_simply_connected( const cell_set& interior );
 // the all-shape record so legitimate non-tilers cannot run away.
 HeeschResult compute_heesch( const shape_cells& shape,
                              std::size_t max_level = 7 );
+
+// M2.6-followup-A.
+//
+// `compute_heesch_bounded` is a budgeted variant of `compute_heesch`. The
+// `node_budget` cap is applied to each DLX call; when any call exhausts
+// it, we return early with `complete = false` and `partial_state` set to
+// the deepest hole-free CoronaState we'd built so far.
+//
+// The intended consumer is `benchmarks/hybrid/run_bounded_joint`, which
+// hands the partial state to `sat -seed <file>` if `complete == false`.
+// On `complete == true` the returned `result` is the same `HeeschResult`
+// that `compute_heesch` would return (so callers can use both code
+// paths uniformly).
+struct BoundedHeeschResult {
+	bool                          complete;
+	HeeschResult                  result;          // valid iff complete
+	std::optional<CoronaState>    partial_state;   // present iff !complete
+	std::size_t                   oracle_calls;
+	std::size_t                   nodes_explored_total;
+};
+
+BoundedHeeschResult compute_heesch_bounded(
+	const shape_cells& shape,
+	std::size_t max_level = 7,
+	std::size_t node_budget = 1'000'000 );
 
 } // namespace heesch_forge::corona

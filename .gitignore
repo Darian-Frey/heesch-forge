@@ -47,6 +47,10 @@ src/corona/test_corona
 # M2.4 hybrid harness binary.
 benchmarks/hybrid/run_hybrid
 
+# M2.6-followup-A binary + per-shape partial-state files (regenerable).
+benchmarks/hybrid/bounded_dlx
+benchmarks/hybrid/results/m2.6-followup-A-states/
+
 # Phase 3 lateral-grid sweep intermediates -- regenerable from the
 # scripts. (`.out` is already covered by the global `*.out` rule.)
 benchmarks/lateral/results/bvh_n*.in

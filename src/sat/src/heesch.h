@@ -228,6 +228,17 @@ public:
 
 	void solve( bool get_solution, size_t maxlevel, TileInfo<grid>& info );
 
+	// M2.6-followup-A: seed the solver with placements known to satisfy
+	// coronas 1 .. seed_depth. Each call adds one placement at one level;
+	// must be called BEFORE `solve()`. After all seeds are added, call
+	// `solveFromSeed(...)` rather than `solve(...)`. The seed placements
+	// are emitted as forced unit clauses by getClauses(), so the SAT
+	// solver does not re-search for them.
+	bool addSeedPlacement( const xform_t& T, size_t level );
+	void solveFromSeed(
+		bool get_solution, size_t seed_depth, size_t maxlevel,
+		TileInfo<grid>& info );
+
 	void debug( std::ostream& os ) const;
 	void debugCurrentPatch( patch_t& soln ) const;
 
@@ -284,6 +295,12 @@ private:
 	uint64_t cum_decisions_;
 	uint64_t cum_propagations_;
 	uint64_t num_sat_calls_;
+
+	// M2.6-followup-A: seed anchors. Each entry forces a placement
+	// variable true via a unit clause emitted by getClauses(). The
+	// anchors are populated by addSeedPlacement() and consumed by
+	// solveFromSeed(); plain solve() ignores them.
+	std::vector<var_id> seed_anchors_;
 
 	// Run a SAT solve and accumulate its per-call counter deltas into
 	// the cum_* members. Use this in place of bare s.solve() at every
@@ -362,6 +379,7 @@ HeeschSolver<grid>::HeeschSolver( const Shape<grid>& shape, Orientations ori, bo
 	, cum_decisions_ { 0 }
 	, cum_propagations_ { 0 }
 	, num_sat_calls_ { 0 }
+	, seed_anchors_ {}
 {
 	// Create the 0th corona.
 	getShapeVariable( grid::orientations[0], 0 );
@@ -570,6 +588,18 @@ void HeeschSolver<grid>::getClauses(
 
 	cl.push_back(pos(tiles_[0][0]));
 	solv.add_clause( cl );
+
+	// M2.6-followup-A: forced unit clauses for each seed anchor. These
+	// pre-decide the placement variables corresponding to a CoronaState
+	// supplied by the DLX side of the bounded-DLX hybrid, so SAT does
+	// not re-search for those levels.
+	for ( var_id v : seed_anchors_ ) {
+		cl.clear();
+		cl.push_back( pos( v ) );
+		solv.add_clause( cl );
+	}
+	// (Subsequent blocks call cl.resize(2) before use, so leaving cl in
+	// any state here is fine.)
 
 #ifdef HEESCH_BACKEND_WCNF_DUMP
 	// M1.5: tell the WCNF backend which vars are cell-vars so it can emit
@@ -1159,7 +1189,7 @@ void HeeschSolver<grid>::solve(
 		}
 
 		if (get_solution) {
-			info.setNonTiler( 
+			info.setNonTiler(
 				hc, (hc > 0) ? &hc_solution : nullptr,
 				hh, (hh > hc) ? &hh_solution : nullptr);
 		} else {
@@ -1168,8 +1198,143 @@ void HeeschSolver<grid>::solve(
 	}
 }
 
+// M2.6-followup-A.
+//
+// Register a known-good placement at level `level` to be forced as a
+// unit clause in every subsequent SAT call. Returns true if the variable
+// for (T, level) exists (it must already exist, which means level <=
+// current level after enough increaseLevel() calls). Returns false if
+// the variable is missing -- in that case the seed is silently dropped
+// rather than risk corrupting the encoding; caller should ensure the
+// level was advanced before seeding it.
 template<typename grid>
-bool HeeschSolver<grid>::checkIsohedralTiling( SATSolverImpl& solv ) 
+bool HeeschSolver<grid>::addSeedPlacement( const xform_t& T, size_t level )
+{
+	if ( level == 0 ) {
+		// Level-0 anchor is already emitted by getClauses() unconditionally
+		// (cl.push_back(pos(tiles_[0][0]))). Adding it as a seed would be
+		// a redundant unit clause; harmless but skip it.
+		return true;
+	}
+
+	// Make sure the variable exists. Since increaseLevel() walks all
+	// reachable transforms, an in-corona placement should already have a
+	// variable; if not, getShapeVariable will create one but the
+	// surrounding clauses won't be built for it, which would corrupt the
+	// encoding. So look up only.
+	var_id id = 0;
+	if ( !getShapeVariable( T, level, id ) ) {
+		return false;
+	}
+	seed_anchors_.push_back( id );
+	return true;
+}
+
+// Run from a non-zero seed depth. The caller is responsible for having
+// already called increaseLevel() exactly seed_depth times and added the
+// seed placements via addSeedPlacement(). Mirrors solve()'s main loop
+// from the inside, picking up where increaseLevel() left off.
+template<typename grid>
+void HeeschSolver<grid>::solveFromSeed(
+	bool get_solution, size_t seed_depth, size_t maxlevel,
+	TileInfo<grid>& info )
+{
+	if ( level_ != seed_depth ) {
+		std::cerr << "solveFromSeed: level_ (" << level_
+			<< ") does not match declared seed_depth (" << seed_depth
+			<< ")" << std::endl;
+		info.setNonTiler( 0, nullptr, 0, nullptr );
+		return;
+	}
+
+	if ( !cloud_.surroundable_ ) {
+		info.setNonTiler( 0, nullptr, 0, nullptr );
+		return;
+	}
+
+	// We assume the seed placements describe a valid Hc = seed_depth
+	// corona chain. The "hole-free" status of that chain is the caller's
+	// problem (DLX has already verified it); from SAT's point of view
+	// every seeded level satisfies its constraints.
+	bool got_hh = false;
+	size_t hh = seed_depth;
+	patch_t hh_solution;
+	size_t hc = seed_depth;
+	patch_t hc_solution;
+
+	std::vector<std::unique_ptr<SATSolverImpl>> past_solvers;
+	past_solvers.reserve( MAX_CORONA );
+
+	while ( level_ < maxlevel ) {
+		increaseLevel();
+
+		std::unique_ptr<SATSolverImpl> cur_solver { new SATSolverImpl };
+		cur_solver->new_vars( next_var_ );
+		getClauses( *cur_solver, true );
+
+		if ( runAndAccount( *cur_solver ) != CMSat::l_True ) {
+			if ( check_hh_ && reduce_ ) {
+				extendLevelWithTransforms( level_ - 1, cloud_.adjacent_culled_ );
+				SATSolverImpl final_solver;
+				final_solver.new_vars( next_var_ );
+				getClauses( final_solver, true );
+				if ( runAndAccount( final_solver ) == CMSat::l_True ) {
+					got_hh = true;
+					hh = level_;
+					if ( get_solution ) {
+						getSolution( final_solver, hh_solution, hh );
+					}
+				}
+			}
+			break;
+		}
+
+		// SAT was satisfiable at this level. Hold on to the solver for
+		// later walkback (Hc may be smaller than Hh if the chain has
+		// holes at this depth).
+		hh = level_;
+		past_solvers.push_back( std::move( cur_solver ) );
+
+		if ( get_solution ) {
+			getSolution( *past_solvers.back(), hh_solution, hh );
+		}
+	}
+
+	got_hh = got_hh || !past_solvers.empty();
+
+	// Walkback to find the largest hole-free level. The seed itself is
+	// hole-free (DLX guarantees this), so Hc is at least seed_depth.
+	hc = seed_depth;
+	for ( size_t lev = past_solvers.size(); lev > 0; --lev ) {
+		auto& solver = past_solvers[lev - 1];
+		const size_t real_lev = seed_depth + lev;
+		if ( iterateUntilSimplyConnected( real_lev, *solver ) ) {
+			hc = real_lev;
+			if ( get_solution && hc > 0 ) {
+				getSolution( *solver, hc_solution, hc );
+				if ( check_hh_ && hc == hh ) {
+					hh_solution.clear();
+				}
+			}
+			break;
+		}
+	}
+
+	if ( !got_hh ) {
+		hh = hc;
+	}
+
+	if ( get_solution ) {
+		info.setNonTiler(
+			hc, ( hc > 0 ) ? &hc_solution : nullptr,
+			hh, ( hh > hc ) ? &hh_solution : nullptr );
+	} else {
+		info.setNonTiler( hc, nullptr, hh, nullptr );
+	}
+}
+
+template<typename grid>
+bool HeeschSolver<grid>::checkIsohedralTiling( SATSolverImpl& solv )
 {
 	// The solver is assumed to contain the clauses for a 1-corona. 
 	// Augment it with new clauses that restrict solutions to

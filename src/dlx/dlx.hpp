@@ -67,6 +67,15 @@ public:
 	// solve(). Useful as a normaliser for performance comparisons.
 	std::size_t nodes_explored() const { return last_explored_; }
 
+	// M2.6-followup-A: set a node-count budget. If the next solve()
+	// expands more than `budget` search-tree nodes, it stops early
+	// (without invoking the callback for any further solutions) and
+	// `last_budget_exhausted()` reports true. A budget of 0 disables
+	// the limit; the default is 0.
+	void set_node_budget( std::size_t budget ) { node_budget_ = budget; }
+	std::size_t node_budget() const { return node_budget_; }
+	bool last_budget_exhausted() const { return last_budget_exhausted_; }
+
 private:
 	// Indexed-node layout, all stored in `nodes_`:
 	//   index 0                     : root header
@@ -96,6 +105,8 @@ private:
 	std::vector<Node> nodes_;
 	solution current_;       // partial solution during search
 	std::size_t last_explored_;
+	std::size_t node_budget_;            // 0 = unlimited (M2.6-followup-A)
+	bool last_budget_exhausted_;         // set by search() on early termination
 
 	// Debug / safety: which row ids have we already added? Bounds-check
 	// future calls so a caller that forgets to add_row in order cannot

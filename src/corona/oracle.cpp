@@ -236,9 +236,11 @@ bool Oracle::find_completion( const cell_set& interior,
 	}
 	last_candidates_ = matrix.candidates.size();
 	dlx::Solver solver = build_solver( matrix );
+	solver.set_node_budget( node_budget_ );
 	dlx::Solver::solution sol;
 	const bool ok = solver.find_first( sol );
 	last_explored_ = solver.nodes_explored();
+	last_budget_exhausted_ = solver.last_budget_exhausted();
 	if ( !ok ) {
 		out.clear();
 		return false;
@@ -262,6 +264,7 @@ std::size_t Oracle::count_completions( const cell_set& interior,
 	}
 	last_candidates_ = matrix.candidates.size();
 	dlx::Solver solver = build_solver( matrix );
+	solver.set_node_budget( node_budget_ );
 	std::size_t n = 0;
 	solver.solve( [&]( const dlx::Solver::solution& ) {
 		++n;
@@ -269,6 +272,7 @@ std::size_t Oracle::count_completions( const cell_set& interior,
 		return true;
 	} );
 	last_explored_ = solver.nodes_explored();
+	last_budget_exhausted_ = solver.last_budget_exhausted();
 	return n;
 }
 
@@ -283,6 +287,7 @@ std::size_t Oracle::for_each_completion( const cell_set& interior,
 	}
 	last_candidates_ = matrix.candidates.size();
 	dlx::Solver solver = build_solver( matrix );
+	solver.set_node_budget( node_budget_ );
 	std::size_t n = 0;
 	bool keep_going = true;
 	solver.solve( [&]( const dlx::Solver::solution& sol ) {
@@ -297,6 +302,7 @@ std::size_t Oracle::for_each_completion( const cell_set& interior,
 		return keep_going;
 	} );
 	last_explored_ = solver.nodes_explored();
+	last_budget_exhausted_ = solver.last_budget_exhausted();
 	return n;
 }
 

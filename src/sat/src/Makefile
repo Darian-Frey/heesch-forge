@@ -31,9 +31,18 @@ WCNF_DUMP_OBJECTS = sat-wcnf-dump.o isohedral.o
 
 all: sat viz gen surrounds report sat-cadical sat-kissat sat-dump sat-wcnf-dump
 
+CORONA_DIR = ../../corona
+CORONA_LIB = $(CORONA_DIR)/libcorona.a
+
+# M2.6-followup-A: sat needs CoronaState::read for the -seed flag, so we
+# pull in libcorona.a (which transitively needs libdlx.a too). The
+# recursive make builds the corona library if it's stale or missing.
+$(CORONA_LIB):
+	$(MAKE) -C $(CORONA_DIR) libcorona.a
+
 # Link order matters with GNU ld: object files before libraries.
-sat: sat.o isohedral.o
-	$(CXX) -o sat sat.o isohedral.o $(LIBS)
+sat: sat.o isohedral.o $(CORONA_LIB)
+	$(CXX) -o sat sat.o isohedral.o $(CORONA_LIB) ../../dlx/libdlx.a $(LIBS)
 
 sat-cadical.o: sat.cpp
 	$(CXX) $(CXXFLAGS) -DHEESCH_BACKEND_CADICAL -c -o sat-cadical.o sat.cpp

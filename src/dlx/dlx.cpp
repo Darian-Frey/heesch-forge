@@ -19,6 +19,8 @@ Solver::Solver( col_id primary_columns )
 	, nodes_ {}
 	, current_ {}
 	, last_explored_ { 0 }
+	, node_budget_ { 0 }
+	, last_budget_exhausted_ { false }
 	, sealed_ { false }
 {
 	// Allocate root + primary column headers up front.
@@ -145,6 +147,13 @@ void Solver::search( const callback& cb, bool& keep_going )
 	if ( !keep_going ) {
 		return;
 	}
+	// M2.6-followup-A: enforce node-count budget. Flips keep_going so
+	// every recursive frame above us also unwinds promptly.
+	if ( node_budget_ != 0 && last_explored_ > node_budget_ ) {
+		last_budget_exhausted_ = true;
+		keep_going = false;
+		return;
+	}
 	if ( nodes_[ROOT].R == ROOT ) {
 		keep_going = cb( current_ );
 		return;
@@ -185,6 +194,7 @@ std::size_t Solver::solve( const callback& cb )
 {
 	sealed_ = true;
 	last_explored_ = 0;
+	last_budget_exhausted_ = false;
 	current_.clear();
 
 	std::size_t count = 0;

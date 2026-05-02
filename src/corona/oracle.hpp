@@ -118,12 +118,21 @@ public:
 	// Diagnostic: DLX search-tree node count for the most recent solve.
 	std::size_t last_nodes_explored() const { return last_explored_; }
 
+	// M2.6-followup-A: per-call DLX node-count budget. Sticky across
+	// calls. 0 = unlimited (default). After a call, check
+	// last_budget_exhausted() to know whether the result is incomplete.
+	void set_node_budget( std::size_t budget ) { node_budget_ = budget; }
+	std::size_t node_budget() const { return node_budget_; }
+	bool last_budget_exhausted() const { return last_budget_exhausted_; }
+
 private:
 	shape_cells base_shape_;
 	std::array<shape_cells, 8> oriented_;
 
 	std::size_t last_candidates_ = 0;
 	std::size_t last_explored_   = 0;
+	std::size_t node_budget_     = 0;
+	bool last_budget_exhausted_  = false;
 };
 
 } // namespace heesch_forge::corona

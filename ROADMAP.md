@@ -10,7 +10,7 @@ This document tracks phases, gates, and current status. The proposal in `PROPOSA
 
 ## Phase status overview
 
-*Updated 2026-05-02: Phase 2 closed via M2.7. **Phase 3 closed via M3.5; M3.3-followup landed (20 Hc = 2 octasquare polyforms at s + o ≥ 7 catalogued); M3.3-followup-2 landed (49 (5, 5) inconclusives re-classified at `-maxlevel 9` — all still inconclusive, no Hc ≥ 3 surfaced); M3.2-followup landed (bevelhex n = 11 swept after upstream bitgrid bumped <128>→<256>; 1 new Hc = 2, no Hc = 3); M4.1 landed (Phase-4 RL pilot MDP defined); M4.2 landed (RL scaffold at `src/rl/` + random-policy floor distribution); M4.3 landed (CEM training loop implemented; pilot run surfaces M4.1 §7 "reward-signal failure" — vanilla CEM at our reward sparsity does not lift past random; M4.4 dense-reward gated on M2.6-followup is the right next thing).** Both lateral grids now have explicit non-trivial Heesch-number data — **3 Hc = 2 bevelhex (n = 9, 10, 11)** + 20 Hc = 2 octasquare (s + o = 7, 9, 10). Random-policy floor at n_max = 12: 1 Hc = 2 per 5 000 trajectories; CEM-trained policy at n_max = 10 also lands at random rate. **M2.6-followup (bounded-DLX + SAT partial-state seed; encoding refactor) is now the single load-bearing open milestone** — it unblocks both the Phase-2 hybrid story and Phase-4 M4.4. Bevelhex n = 12 (~4–6 h wall) and the 49 octasquare inconclusives at deeper maxlevel are the remaining compute-bound lateral-grid open items. Phase 1 closed.*
+*Updated 2026-05-02: Phase 2 closed via M2.7. **Phase 3 closed via M3.5; M3.3-followup landed (20 Hc = 2 octasquare polyforms at s + o ≥ 7 catalogued); M3.3-followup-2 landed (49 (5, 5) inconclusives re-classified at `-maxlevel 9` — all still inconclusive, no Hc ≥ 3 surfaced); M3.2-followup landed (bevelhex n = 11 swept after upstream bitgrid bumped <128>→<256>; 1 new Hc = 2, no Hc = 3); M4.1 landed (Phase-4 RL pilot MDP defined); M4.2 landed (RL scaffold at `src/rl/` + random-policy floor distribution); M4.3 landed (CEM training loop implemented; pilot run surfaces M4.1 §7 "reward-signal failure" — vanilla CEM at our reward sparsity does not lift past random); M2.6-followup-A landed (bounded-DLX + SAT partial-state seed: full mechanical chain, 53× speedup vs M2.6's naive joint).** Both lateral grids now have explicit non-trivial Heesch-number data — **3 Hc = 2 bevelhex (n = 9, 10, 11)** + 20 Hc = 2 octasquare (s + o = 7, 9, 10). Random-policy floor at n_max = 12: 1 Hc = 2 per 5 000 trajectories; CEM-trained policy at n_max = 10 also lands at random rate. **M2.6-followup-B (encoding refactor for MaxSAT-derived dense reward) is now the single load-bearing open milestone for M4.4 / M4.5** — it's the open M1.5-surfaced architectural commitment. Bevelhex n = 12 (~4–6 h wall) and the 49 octasquare inconclusives at deeper maxlevel are the remaining compute-bound lateral-grid open items. Phase 1 closed.*
 
 | Phase | Layers | Status | Target completion |
 |-------|--------|--------|-------------------|
@@ -200,6 +200,32 @@ When a planned file is created, move its row from this table into the "Live now"
 ---
 
 ## Status notes (latest first)
+
+**2 May 2026 (M2.6-followup-A; bounded-DLX + SAT partial-state seed).** Phase-2 Layer-2's open follow-up — the implementation that makes the M2.7 "task-class-based hybrid" architecture actually run fast — landed. Five concrete pieces on `main`:
+
+1. DLX node-count budget at `src/dlx/dlx.{hpp,cpp}` (`set_node_budget`, `last_budget_exhausted`); 18 prior tests pass.
+2. Oracle budget plumbing at `src/corona/oracle.{hpp,cpp}` delegating to DLX, applied at all three solve sites.
+3. `compute_heesch_bounded(shape, max_level, node_budget)` at `src/corona/heesch_solver.{hpp,cpp}` returning `BoundedHeeschResult { complete, result, optional<CoronaState> partial_state, ... }`.
+4. heesch-sat seed support: `addSeedPlacement` + `solveFromSeed` in `src/sat/src/heesch.h`; `-seed <file>` CLI flag in `sat.cpp`. Build wires `libcorona.a` into the sat binary so `CoronaState::read` is callable.
+5. Orchestrator `benchmarks/hybrid/run_bounded_joint.py` + harness `benchmarks/hybrid/bounded_dlx.cpp`.
+
+**Bench numbers, M0.4 dataset n ∈ {7, 8}:**
+
+```text
+budget=1 000 :  ~3.0 s wall, 23/23 correct  (1+4 DLX, 2+16 sat-no-seed)
+budget=1 000 000: ~91 s wall, 20/23 correct  (3+18 DLX, 0+2 sat-no-seed)
+SAT-only reference: 0.7 s wall, 23/23 correct
+M2.6 naive joint:   159 s wall, 23/23 correct
+M2.4 DLX-only:       11 s wall, 20/23 correct
+```
+
+**Two architectural findings worth landing.** (a) Tighter budget is both faster AND more correct, because M2.4's greedy-Hh walkback can converge on a hole-introducing chain when given enough rope — DLX-complete ≠ DLX-correct, and SAT fallback is the gap-fixer. (b) Subprocess overhead dominates at small n (Python invocations + bounded_dlx + sat = ~16 × 50 ms = ~800 ms of pure overhead on n = 8); fusing into an in-process binary is straightforward future work.
+
+**Vs the M2.6 prediction**: the M2.6/M2.7 writeup estimated 3–5 s at 100 ms time budget; we got ~3 s at 1 000-node budget on n = 7+8, validating the architectural claim. **53× speedup vs naive joint.** Full write-up at `benchmarks/hybrid/results/m2.6-followup-A.md`. Per-budget CSVs at `benchmarks/hybrid/results/m2.6-followup-A-n{7,8}-budget*.csv`.
+
+**Known issue**: `sat -seed` with a degenerate depth-1 (level-0-only) seed reproducibly errors on certain shapes ("Tried to look up non-existent cell <x,y>"). Orchestrator workaround: skip `-seed` when `partial_depth ≤ 1`. Pure corner case (DLX exhausted before completing level 1, so the seed adds no information); investigation deferred.
+
+**Phase-4 dependency chain after M2.6-followup-A**: M4.5 → M4.4 (dense reward) → **M2.6-followup-B (encoding refactor for MaxSAT)**. M2.6-followup-B is the open architectural commitment from M1.5 — replace the reachability-style CNF encoding with `coverage[c]` decision variables decoupled from tile placement, so RC2 produces meaningful partial-corona scores. Multi-session lift; remains the load-bearing open milestone for M4.4.
 
 **2 May 2026 (M4.3; CEM training loop — reward-signal failure surfaced).** Wagner-style deep cross-entropy trainer landed at `src/rl/heesch_rl/{trajectory,trainer,training_runner}.py` — sampling, top-K elite selection (with shorter-length tiebreak), D₄-augmented imitation loss, Adam optimisation. 20 pytest tests pass. Pilot run on a realistic configuration (n_max = 10, batch 200, 15 generations, 3 000 trajectories, 428 s wall, 1 303 unique canonical polyominoes evaluated): **rmax = 1.0 in every generation, rmean fluctuates 0.01–0.06 with no upward trend, 0 H_c ≥ 2 ever found**. Loss decreases on imitation (`2.2 → 2.0`), gradients flow, parameters update — but the policy converges to the random-baseline H_c = 1 hit rate without surfacing H_c = 2.
 
