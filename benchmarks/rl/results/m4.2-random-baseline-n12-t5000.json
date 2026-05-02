@@ -1,0 +1,17 @@
+{
+  "n_max": 12,
+  "n_min": 4,
+  "n_trajectories": 5000,
+  "elapsed_s": 616.392,
+  "trajectories_per_s": 8.11,
+  "oracle_cache_size": 2867,
+  "reward_distribution": {
+    "-0.5": 147,
+    "0.0": 4611,
+    "1.0": 241,
+    "2.0": 1
+  },
+  "length_mean": 9.4144,
+  "length_min": 4,
+  "length_max": 12
+}

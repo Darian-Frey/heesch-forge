@@ -1,0 +1,28 @@
+warning: `VIRTUAL_ENV=/home/azathoth/heesch-forge/.venv` does not match the project environment path `.venv` and will be ignored; use `--active` to target the active environment instead
+  [  500/5000]  elapsed   37.5s  oracle-cache 390
+  [ 1000/5000]  elapsed  105.9s  oracle-cache 731
+  [ 1500/5000]  elapsed  204.1s  oracle-cache 1029
+  [ 2000/5000]  elapsed  241.3s  oracle-cache 1334
+  [ 2500/5000]  elapsed  283.8s  oracle-cache 1607
+  [ 3000/5000]  elapsed  322.0s  oracle-cache 1885
+  [ 3500/5000]  elapsed  390.1s  oracle-cache 2157
+  [ 4000/5000]  elapsed  515.4s  oracle-cache 2388
+  [ 4500/5000]  elapsed  550.6s  oracle-cache 2629
+  [ 5000/5000]  elapsed  616.4s  oracle-cache 2867
+{
+  "n_max": 12,
+  "n_min": 4,
+  "n_trajectories": 5000,
+  "elapsed_s": 616.392,
+  "trajectories_per_s": 8.11,
+  "oracle_cache_size": 2867,
+  "reward_distribution": {
+    "-0.5": 147,
+    "0.0": 4611,
+    "1.0": 241,
+    "2.0": 1
+  },
+  "length_mean": 9.4144,
+  "length_min": 4,
+  "length_max": 12
+}

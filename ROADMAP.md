@@ -10,7 +10,7 @@ This document tracks phases, gates, and current status. The proposal in `PROPOSA
 
 ## Phase status overview
 
-*Updated 2026-05-02: Phase 2 closed via M2.7. **Phase 3 closed via M3.5; M3.3-followup landed (20 Hc = 2 octasquare polyforms at s + o ≥ 7 catalogued); M3.3-followup-2 landed (49 (5, 5) inconclusives re-classified at `-maxlevel 9` — all still inconclusive, no Hc ≥ 3 surfaced); M3.2-followup landed (bevelhex n = 11 swept after upstream bitgrid bumped <128>→<256>; 1 new Hc = 2, no Hc = 3); M4.1 landed (Phase-4 RL pilot MDP defined; M4.2 unblocked).** Both lateral grids now have explicit non-trivial Heesch-number data — **3 Hc = 2 bevelhex (n = 9, 10, 11)** + 20 Hc = 2 octasquare (s + o = 7, 9, 10). Bevelhex n = 12 (~4–6 h wall) and the 49 octasquare inconclusives revisited at much deeper maxlevel are the remaining compute-bound lateral-grid open items. M2.6-followup (bounded-DLX + SAT partial-state seed) and Phase 4 (M4.2 GNN policy network) are the load-bearing open items. Phase 1 closed.*
+*Updated 2026-05-02: Phase 2 closed via M2.7. **Phase 3 closed via M3.5; M3.3-followup landed (20 Hc = 2 octasquare polyforms at s + o ≥ 7 catalogued); M3.3-followup-2 landed (49 (5, 5) inconclusives re-classified at `-maxlevel 9` — all still inconclusive, no Hc ≥ 3 surfaced); M3.2-followup landed (bevelhex n = 11 swept after upstream bitgrid bumped <128>→<256>; 1 new Hc = 2, no Hc = 3); M4.1 landed (Phase-4 RL pilot MDP defined); M4.2 landed (RL scaffold at `src/rl/` + random-policy floor distribution).** Both lateral grids now have explicit non-trivial Heesch-number data — **3 Hc = 2 bevelhex (n = 9, 10, 11)** + 20 Hc = 2 octasquare (s + o = 7, 9, 10). Random-policy floor at n_max = 12: 1 Hc = 2 per 5 000 trajectories. Bevelhex n = 12 (~4–6 h wall) and the 49 octasquare inconclusives revisited at much deeper maxlevel are the remaining compute-bound lateral-grid open items. M2.6-followup (bounded-DLX + SAT partial-state seed) and Phase 4 (M4.3 cross-entropy training loop) are the load-bearing open items. Phase 1 closed.*
 
 | Phase | Layers | Status | Target completion |
 |-------|--------|--------|-------------------|
@@ -115,7 +115,7 @@ Smallest n with H=k catalogued for both grids, k ∈ {1, 2, 3, 4(+)}.
 ### Milestones
 
 - [x] M4.1 — Define MDP: state encoding, action space, episode termination. Document at `benchmarks/rl/M4.1-mdp.md` (~360 lines, ten sections). Locks four axes for Wagner-style deep-cross-entropy: (1) state = canonical-form polyomino + observation as 4-cardinal cell-adjacency graph with 6 per-cell features (xy, is_boundary, boundary_degree, is_corner, n_normalised); (2) action = `Add(x,y)` over `legal_add_positions` ∪ `{Stop}`, add-only by default with square-removal flagged as decision-gate fallback; (3) reward = sparse terminal *H_c* from v1 CMSat solver, with -0.5 for hole / disconnected and -1 for under-floor — MaxSAT dense reward deferred to M4.4 pending M2.6-followup encoding refactor; (4) termination on Stop / `n_max` / invalid-state. D₄ symmetry handled by replay-time augmentation (Wagner's approach), not equivariant network. Validation contract for M4.5: rediscover all Kaplan H ≥ 2 polyominoes at n ≤ 12 within budget B = 10⁵ trajectories. Deferred-decisions table makes M4.2 / M4.3 / M4.4 boundaries explicit. M4.2 (GNN policy network) is unblocked.
-- [ ] M4.2 — GNN policy network (PyTorch Geometric); baseline random-policy reward distribution.
+- [x] M4.2 — GNN policy network (PyTorch Geometric); baseline random-policy reward distribution. Scaffold at `src/rl/` (uv project, CPU-only torch wheels): `heesch_rl/canonical.py` (D₄ canonicalisation), `heesch_rl/env.py` (MDP per M4.1), `heesch_rl/oracle.py` (sat-subprocess H_c with isohedral check + 30 s timeout + memoisation), `heesch_rl/policy.py` (3-layer GraphSAGE + per-boundary add-logit + graph-pool stop-logit), `heesch_rl/baseline.py` (random-policy runner). 17 pytest unit + integration tests passing in ~7 s. Random-policy floor: at n_max = 12 with 5 000 trajectories, distribution is 2.94 % hole / 92.22 % H_c = 0 / 4.82 % H_c = 1 / 0.02 % H_c = 2 (1 shape in 5 000) — full numbers at `benchmarks/rl/M4.2-results.md` + `benchmarks/rl/results/m4.2-random-baseline-n12-t5000.json`. Throughput: 8.1 traj/s at n_max = 12 (sat-bound). M4.3 (cross-entropy training loop) is now unblocked.
 - [ ] M4.3 — Implement deep cross-entropy training loop (Wagner 2021).
 - [ ] M4.4 — Reward = MaxSAT-derived score from Layer-1+2 solver.
 - [ ] M4.5 — Pilot run on n ≤ 12: verify discovery of all known H=2 shapes.
@@ -200,6 +200,24 @@ When a planned file is created, move its row from this table into the "Live now"
 ---
 
 ## Status notes (latest first)
+
+**2 May 2026 (M4.2; RL scaffold + random-policy baseline).** PROPOSAL §5 Layer 3's M4.2 deliverable (GNN policy network in PyTorch Geometric + random-policy baseline distribution) landed at `src/rl/`. Project layout is uv-managed (CPU-only torch wheels per M4.1 §9) with five `heesch_rl/` modules — `canonical.py` (D₄ canonicalisation; tested invariance, idempotency, orbit sizes), `env.py` (MDP env per M4.1; tested reset / legal-actions / step / floor-stop / oracle invocation), `oracle.py` (sat subprocess wrapper with isohedral check, 30 s timeout, memoisation; tested round-trip on real sat binary), `policy.py` (3-layer GraphSAGE encoder + per-boundary add-logit head + graph-pool stop-logit head; forward-passes correctly on a P-pentomino observation), `baseline.py` (uniform-random policy runner). 17 pytest tests pass in ~7 s.
+
+**Random-policy reward distribution.**
+
+```text
+n_max=8, 1 000 trajectories,  5.9 s wall, 297 unique shapes
+  -0.5: 3 (0.30 %)    0.0: 979 (97.90 %)    1.0: 18 (1.80 %)
+  -- no Hc>=2 (Kaplan: first Hc=2 at n=9, so n_max=8 hitting zero is exact-match)
+
+n_max=12, 5 000 trajectories, 616.4 s wall, 2 867 unique shapes
+  -0.5: 147 (2.94 %)  0.0: 4 611 (92.22 %)  1.0: 241 (4.82 %)  2.0: 1 (0.02 %)
+  -- 1 Hc=2 in 5 000 trajectories: this is the floor M4.5's trained policy must beat
+```
+
+Detail at `benchmarks/rl/M4.2-results.md`. JSON summary committed at `benchmarks/rl/results/m4.2-random-baseline-n12-t5000.json`. Throughput 8.1 traj/s at n_max = 12 is sat-bound; M4.3's training loop will need batched / pooled sat invocation to make ~10⁵ trajectory budgets practical.
+
+The two oracle defaults that mattered: (a) `-isohedral` flag on sat (without it, tilers come back as `! 0` inconclusive instead of `I` isohedral, and at small n the SAT solve hangs trying to surround a shape that doesn't need surrounding); (b) 30 s timeout (zero hits in either run, but defensive). Both decisions are documented inline in `heesch_rl/oracle.py`. M4.3 is now unblocked.
 
 **2 May 2026 (M4.1; Phase-4 RL pilot MDP defined).** Phase-4 RL pilot's MDP design is committed at `benchmarks/rl/M4.1-mdp.md` (~360 lines, ten sections). PROPOSAL §5 Layer 3 promised Wagner-style (arXiv:2104.14516) deep cross-entropy over polyomino construction; M4.1 locks the four axes that contract gives the next milestones:
 
