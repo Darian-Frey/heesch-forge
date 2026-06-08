@@ -18,7 +18,7 @@ This document tracks phases, gates, and current status. The proposal in `PROPOSA
 | 1 — Engineering | L1 | ✅ closed (negative result; M1.2b deferred) | retrospective shipped |
 | 2 — Hybrid solver | L2 | ✅ closed (6/7; M2.4 partial; bounded-joint deferred) | retrospective shipped |
 | 3 — Lateral grids | L4 | ✅ closed (5/5; **2 Hc=2 bevelhex**; followups deferred) | retrospective shipped |
-| 4 — RL pilot | L3 | ⚪ not started | +28 weeks |
+| 4 — RL pilot | L3 | 🟡 in progress (M4.1–M4.3 landed; blocked on M2.6-followup-B for dense reward) | +28 weeks |
 | 5 — RL scale | L3 | ⚪ not started | +40 weeks |
 | 6 — Theory | L5 | ⚪ continuous from Phase 1 | +52 weeks |
 
