@@ -47,7 +47,12 @@ heesch-forge/
 
 ## Status
 
-**v0.1, 29 April 2026.** Proposal drafted. Repository scaffolded. No code yet.
+> **Status:** Active
+> **Provenance:** Claude (primary auditor & document generator); multi-LLM hub-and-spoke (GPT-/Gemini-class spokes for exploration & code drafting)
+> **Last reviewed:** 2026-06-08
+> **Why this status:** Phases 0–3 closed with retrospectives shipped; Phase 4 (RL pilot) in progress through M4.3. One load-bearing open milestone — **M2.6-followup-B** (MaxSAT coverage-variable encoding refactor) — gates the Phase-4 dense-reward chain.
+
+**v0.2, 8 June 2026.** Phase 0 (Setup) ✅ · Phase 1 (Engineering, L1) ✅ closed as a negative result · Phase 2 (Hybrid solver, L2) ✅ closed (M2.6-followup-A landed a 53× speedup) · Phase 3 (Lateral grids, L4) ✅ closed (first publishable non-Kaplan-grid Heesch data: Hc = 2 on bevelhex and octasquare) · Phase 4 (RL pilot, L3) 🟡 in progress (M4.1–M4.3 landed; CEM reward-signal failure surfaced). See [`ROADMAP.md`](./ROADMAP.md) for the full status notes.
 
 ## How to engage
 
